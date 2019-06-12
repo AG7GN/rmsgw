@@ -4,11 +4,11 @@ IMPORTANT: You must obtain a [Sysop Winlink account](https://www.winlink.org/con
 
 ## 1. Update package list
 	sudo apt-get update
-	sudo apt-get install git
+	sudo apt-get install build-essential autoconf libtool git
 
 ## 2. Install the VE7FET AX.25 packages
 
-The DEB packages below were built for Raspberry Pi Stretch using David Ranch's (KI6ZHD) excellent [instructions](http://www.trinityos.com/HAM/CentosDigitalModes/RPi/rpi2-setup.html#18.install-ax25).
+The Debian packages below were built for Raspberry Pi Stretch using David Ranch's (KI6ZHD) excellent [instructions](http://www.trinityos.com/HAM/CentosDigitalModes/RPi/rpi2-setup.html#18.install-ax25).
 
 ### 2.1 libax25
 #### 2.1.1 Prerequisites
@@ -25,43 +25,41 @@ Prevent overwriting the VE7FET libax25 with the stock version of libax25:
 #### 2.2.1 Prerequisites
 	sudo apt-get install libncurses5-dev libncursesw5-dev
 
-Prevent overwriting the VE7FET libax25 with the stock version of ax25-apps:
+Prevent overwriting the VE7FET ax25-apps with the stock version of ax25-apps:
 
 	sudo apt-mark hold ax25-apps
 
 #### 2.2.2 Install
 	sudo dpkg --install ax25-apps_2.0.1-1_armhf.deb
-    sudo cp -n /usr/share/doc/ax25apps/conf/ax25ipd.conf.dist /etc/ax25/ax25ipd.conf
-    sudo cp -n /usr/share/doc/ax25apps/conf/ax25mond.conf.dist /etc/ax25/ax25mond.conf
-    sudo cp -n /usr/share/doc/ax25apps/conf/ax25rtd.conf.dist /etc/ax25/ax25rtd.conf
 
 ### 2.3 ax25-tools
 #### 2.3.1 Prerequisites
-Prevent overwriting the VE7FET libax25 with the stock version of ax25-tools:
+Prevent overwriting the VE7FET ax25-tools with the stock version of ax25-tools:
 	
 	sudo apt-mark hold ax25-tools
 
 #### 2.3.2 Install
 	sudo dpkg --install ax25-tools_1.0.5-1_armhf.deb
-    sudo cp -n /usr/share/doc/ax25tools/conf/ax25d.conf.dist /etc/ax25/ax25d.conf
-    sudo cp -n /usr/share/doc/ax25tools/conf/axports.dist /etc/ax25/axports
-    sudo cp -n /usr/share/doc/ax25tools/conf/axspawn.conf.dist /etc/ax25/axspawn.conf
-    sudo cp -n /usr/share/doc/ax25tools/conf/nrbroadcast.dist /etc/ax25/nrbroadcast
-    sudo cp -n /usr/share/doc/ax25tools/conf/nrports.dist /etc/ax25/nrports
-    sudo cp -n /usr/share/doc/ax25tools/conf/rsports.dist /etc/ax25/rsports
-    sudo cp -n /usr/share/doc/ax25tools/conf/rxecho.conf.dist /etc/ax25/rxecho.conf
-    sudo cp -n /usr/share/doc/ax25tools/conf/ttylinkd.conf.dist /etc/ax25/ttylinkd.conf
 
 ## 3. Install rmsgw
-Adapted from [K4GBB's instructions](http://k4gbb.no-ip.org/docs/rmsgateinst.html).  You must be root to edit the files in the steps that follow.  In a terminal, run sudo followed by the name of your text editor of choice. 
+Adapted from [K4GBB's instructions](http://k4gbb.no-ip.org/docs/rmsgateinst.html).  This section requires you to edit several text files.  "Sudo edit" indicates you must have root privileges to edit the file(s) in that step.  In a terminal, run sudo followed by the name of your text editor of choice.  
+
+Example:
+
+	sudo nano /etc/ax25d/direwolf.conf
+	
+Or if you prefer an editor similar to Windows Notepad, run this command in the terminal:
+
+	sudo leafpad
+Ignore any warning messages that appear in the terminal.  Once Leafpad opens, click __File__ > __Open__ and then click on __File System__ to go the the top level folder. From there, navigate to the file location indicated in the steps below.
 
 ### 3.1 Create rmsgw user
 
-	sudo adduser rmsgw --no-create-home --disabled-password
+	sudo useradd -c 'Linux RMS Gateway' -d /etc/rmsgw -s /bin/false rmsgw
 
 ### 3.2 Install Prerequisites
 
-	sudo apt-get install xutils-dev libxml2 python-requests mysql-client libmariadbclient-dev libxml2-dev
+	sudo apt-get install xutils-dev libxml2 python-requests mysql-client libmariadbclient-dev libxml2-dev autoconf
 
 ### 3.3 Clone repository and build rmsgw
 	
@@ -77,24 +75,35 @@ Adapted from [K4GBB's instructions](http://k4gbb.no-ip.org/docs/rmsgateinst.html
 
 	sudo ln -s /usr/local/etc/rmsgw /etc/rmsgw
 	
-### 3.5 Configure /etc/ax25/ax25d.conf
+### 3.5 Copy the default ax25d.conf.dist to /etc/ax25/ax25d.conf
 
-Replace N0ONE with your call sign.
+	cd /etc/ax25
+	sudo cp ax25d.conf.dist ax25d.conf
 
-	[N0ONE-10 VIA 0]
+### 3.6 Sudo edit /etc/ax25/ax25d.conf.
+Locate this line near the top of the file:
+
+	[N0ONE VIA vhfdrop]
+
+Just before that line, add the following lines, replacing `N0ONE` with your call sign.
+
+	[N0ONE-10 VIA vhfdrop]
 	NOCALL   * * * * * *  L
 	N0CALL   * * * * * *  L
 	default  * * * * * *  - rmsgw  /usr/local/bin/rmsgw   rmsgw -l debug -P %d %U
+	#
 
-### 3.6 Configure /etc/rmsgw/banner
+### 3.7 Sudo edit /etc/rmsgw/banner
 
 Add text as desired.  The radio transmits this banner text, so keep it short.  Example:
 
     **** My RMS Gateway **** 
 
-### 3.7 Configure /etc/rmsgw/channels.xml
+### 3.8 Sudo edit /etc/rmsgw/channels.xml
 
-Change basecall, callsign, password, gridquare, frequency, baud, power, height, gain, direction, hours, groupreference, and servicecode as needed.
+Replace `channel name="0"` with `channel name="vhfdrop"`.
+
+Change __basecall, callsign, password, gridquare, frequency__ (in Hz), __baud, power, height, gain, direction, hours, groupreference,__ and __servicecode__ as needed.
 
 	<?xml version="1.0" encoding="UTF-8"?>
 	<rmschannels xmlns="http://www.namespace.org"
@@ -122,15 +131,15 @@ Change basecall, callsign, password, gridquare, frequency, baud, power, height, 
   		</channel>
 	</rmschannels>
 	
-#### 3.7.1 Make a local copy of /usr/local/bin/rmschanstat
+#### 3.8.1 Make a local copy of /usr/local/bin/rmschanstat
 
-sudo cp /usr/local/bin/rmschanstat /usr/local/bin/rmschanstat.local
+	sudo cp /usr/local/bin/rmschanstat /usr/local/bin/rmschanstat.local
 
-#### 3.7.2 Edit /usr/local/bin/rmschanstat.local
+#### 3.8.2 Sudo edit /usr/local/bin/rmschanstat.local
 
 Change this line:
 
-	AXPORTS=%axports%
+	AXPORTS=@axports@
 
 to:
 
@@ -144,9 +153,9 @@ to:
 
 	IP=($(ps ax | grep kissattach | sed -n -e "s/^.*${NAME} //p" ))
 
-### 3.8 Configure /etc/rmsgw/sysop.xml
+### 3.9 Sudo edit /etc/rmsgw/sysop.xml
 
-Change as needed.
+Change __Callsign, Password, GridSquare, SysopName, StreetAddress1, StreetAddress2, City, State, Country, PostalCode, Email, Phones,	Website, Comments__ as needed.
 
 	<sysops vcsAuthor="$Author: eckertb $" vcsId="$Id: sysop-template.xml 157 2013-12-07 12:29:28Z eckertb $" vcsRevision="$Revision: 157 $">
   		<sysop>
@@ -167,9 +176,9 @@ Change as needed.
   		</sysop>
 	</sysops>
 
-### 3.9 Configure /etc/rmsgw/gateway.conf
+### 3.10 Sudo edit /etc/rmsgw/gateway.conf
 
-Change GWCALL and GRIDSQUARE as needed.
+Change __GWCALL__ and __GRIDSQUARE__ as needed.
 
 	GWCALL=N0ONE-10
 	GRIDSQUARE=AA00aa
@@ -182,29 +191,40 @@ Change GWCALL and GRIDSQUARE as needed.
 ## 4. Install Hamlib
 
 ### 4.1 Prerequisites
-	sudo apt-get install texinfo
+	sudo apt-get install texinfo build-essential autoconf libtool git
 
 ### 4.2 Install
 	cd ~
-	sudo dpkg --install hamlib_3.3-1_armhf.deb
+	sudo dpkg --install hamlib_4.0-1_armhf.deb
+	
+Direwolf (and maybe other apps that use hamlib) looks for `libhamlib.so.2` which the latest version of Hamlib does not provide, so make a symlink for it:
+	
+	cd /usr/local/lib
+	sudo ln -s libhamlib.so.4.0.0 libhamlib.so.2
+	sudo ldconfig
+
+Prevent overwriting the latest hamlib package we just installed by the very old stock version:
+
+	sudo apt-mark hold hamlib
 	
 ## 5. Install Direwolf
 
 ### 5.1 Prerequisites
-	sudo apt-get install libasound2-dev unzip
-	sudo apt-get install gpsd libgps-dev
+	sudo apt-get install libasound2-dev unzip extra-xdg-menus gpsd libgps-dev
 	
 ### 5.2 Install
 	cd ~
 	sudo dpkg --install direwolf_1.5-1_armhf.deb
-	sudo cp ~/direwolf.conf /etc/ax25/
+	sudo cp /usr/share/doc/direwolf/examples/direwolf.conf /etc/ax25/
+	
+NOTE:  There's lots of good information about Direwolf, it's configuration and operation in the `/usr/share/doc/direwolf/examples` folder.
 
 ### 5.3 Configure
 
-Select either the Left or Right radio configuration depending on which port your radio connects to on the DigiLink board, or select Signalink if you are using that device.
+Select either the Left or Right radio configuration depending on which port your radio connects to on the DigiLink board, or select Signalink if you are using that audio device.
 
-#### 5.3.1 "Left" Radio on DigiLink Board
-Create or edit /etc/ax25/direwolf.conf and change MYCALL:
+#### 5.3.1 "Left" Radio on DigiLink/FePi
+Sudo edit /etc/ax25/direwolf.conf and change __MYCALL__:
 
 	ADEVICE fepi-capture-left fepi-playback-left
 	ACHANNELS 1
@@ -212,11 +232,10 @@ Create or edit /etc/ax25/direwolf.conf and change MYCALL:
 	ARATE 96000
 	MODEM 1200
 	MYCALL N0ONE
-	MODEM 1200
 	PTT GPIO 12
 
-#### 5.3.2 "Right" Radio on DigiLink Board
-Create or edit /etc/ax25/direwolf.conf and change MYCALL:
+#### 5.3.2 "Right" Radio on DigiLink/FePi
+Sudo edit /etc/ax25/direwolf.conf and change __MYCALL__:
 
 	ADEVICE fepi-capture-right fepi-playback-right
 	ACHANNELS 1
@@ -224,11 +243,10 @@ Create or edit /etc/ax25/direwolf.conf and change MYCALL:
 	ARATE 96000
 	MODEM 1200
 	MYCALL N0ONE
-	MODEM 1200
 	PTT GPIO 23
 
 #### 5.3.3 Signalink
-Create or edit /etc/ax25/direwolf.conf and change MYCALL:
+Sudo edit /etc/ax25/direwolf.conf and change __MYCALL__:
 
 	ADEVICE plughw:CARD=1,DEV=0
 	ACHANNELS 1
@@ -236,7 +254,6 @@ Create or edit /etc/ax25/direwolf.conf and change MYCALL:
 	ARATE 48000
 	MODEM 1200
 	MYCALL N0ONE
-	MODEM 1200
 
 
 
