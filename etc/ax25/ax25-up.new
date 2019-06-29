@@ -1,0 +1,369 @@
+#!/bin/bash
+
+# dranch
+
+# Ax25, 6pack, bpqehter, rose, & mkiss - are pre-loaded via /etc/modules
+# this script file is /etc/ax25 /ax25-up-all model for ax25-up
+# ax25-up is started automatically when booting via /etc/init.d/ax25
+# It is adapted from K4GBB ax25 scripts for RaspBerry Pi
+
+# It's a requirement that you get the tools from
+# http://www.tnc-x.com/params.zip and install them FIRST
+
+# modified by dranch@trinnet.net
+#
+# 11/10/18 - Added restoring advanced ax25 settings
+# 11/04/18 - Added IPoverAX25 support
+# 10/21/18 - Updated listen parameters for new listen -t syntax
+# 10/20/18 - Added Kenwood D74 support; added a sleep before starting ax25-up.new2
+# 10/11/18 - Minor formatting and comment fixes
+# 01/31/18 - Minor typo fix for $AXINT (was AXING) interface details going to the log
+# 09/02/17 - Added more logging if listen vs axlisten isn't correct
+# 08/30/17 - change the path for ax25ipd
+# 08/22/17 - moved tty monitoring to TTY8
+# 04/20/17 - Test for direwolf failing to start
+#          - Make the direwolf line use the LOG varaible vs a hard coded one
+# 05/01/16 - Added more error handling
+# 11/29/15 - Major revamp with command variables, checks for netrom before running
+#            NR commands, ax25 stack setting dump, etc
+# 06/06/15 - Added notes on using direwolf for logging vs listen
+# 05/11/14 - more commands to use variables
+# 10/18/14 - moved the listen log from secondary new2 script to this one
+#            gets rid of the previous and duplicate listen.log
+# 03/10/14 - Added listen log (needs high logrotate), moved direwolf 
+#            config to use KISS vs. MKISS
+# 09/29/13 - changed TX delay to 250
+# 07/30/13 - Added setting the TNC parameters
+
+#Disabled - not needed
+#echo 1 > /proc/sys/net/ipv4/ip_forward
+#
+#
+TZ=/etc/localtime
+export TZ
+
+#Binaries
+#--------
+DIREWOLF=/usr/bin/direwolf
+MKISS=/usr/sbin/mkiss
+KISSATTACH=/usr/sbin/kissattach
+IP=/bin/ip
+KISSPARMS=/usr/sbin/kissparms
+LISTEN=/usr/bin/listen
+
+
+#Variables for system settings
+#-----------------------------
+#TNC Type: tncpi or direwolf
+TNCTYPE=_TNC_
+#TNC timing settings
+AXINT=wl2kgw
+TXDELAY=400
+TXTAIL=50
+#Placeholder IP address for ax25 interface if you wish to run IP over AX25
+IPADDR="44.127.0.1/24"
+
+
+# config files
+#-------------
+DIREWOLFCONF=/etc/ax25/direwolf.conf
+
+
+#LOG destination
+#----------------
+LOG="/var/log/packet.log"
+
+# Functions
+# ---------
+function CHKERR {
+   if [ $? -ne 0 ]; then
+      echo -e "\nThe last command: $0 failed.  See $LOG for more details\n"
+      #/etc/ax25/ax25-down
+      exit 1
+   fi
+}
+
+function SHOWAXSETTINGS {
+   # See 
+   #   Specific timer settings: http://tldp.org/HOWTO/AX25-HOWTO/x235.html#AEN258
+   #   DG vs VC mode: https://www.mail-archive.com/linux-hams@vger.rutgers.edu/msg04477.html
+   #
+   #  The READING and display of kissparms settings is NOT possible with Linux today
+   #
+   echo "Displaying current system kissparms"
+   echo "Displaying current system kissparms" >> $LOG
+   echo "--"
+   echo "--" >> $LOG
+   echo "AX25 protocol mode (0=Norm* 1=Extd)                : `cat /proc/sys/net/ax25/ax0/ax25_default_mode`"
+   echo "AX25 protocol mode (0=Norm* 1=Extd)                : `cat /proc/sys/net/ax25/ax0/ax25_default_mode`" >> $LOG
+   echo "AX25 backoff type (0=Linear 1=Expon*)              : `cat /proc/sys/net/ax25/ax0/backoff_type`"
+   echo "AX25 backoff type (0=Linear 1=Expon*)              : `cat /proc/sys/net/ax25/ax0/backoff_type`" >> $LOG
+   echo "AX25 connect mode (0=none 1=network 2=all*)        : `cat /proc/sys/net/ax25/ax0/connect_mode`"
+   echo "AX25 connect mode (0=none 1=network 2=all*)        : `cat /proc/sys/net/ax25/ax0/connect_mode`" >> $LOG
+   echo "AX25 Extd window size (num of unacked packets 32*) : `cat /proc/sys/net/ax25/ax0/extended_window_size`"
+   echo "AX25 Extd window size (num of unacked packets 32*) : `cat /proc/sys/net/ax25/ax0/extended_window_size`" >> $LOG
+   echo "AX25 idle timeout (idle session timeout in M 20*)  : `cat /proc/sys/net/ax25/ax0/idle_timeout`"
+   echo "AX25 idle timeout (idle session timeout in M 20*)  : `cat /proc/sys/net/ax25/ax0/idle_timeout`" >> $LOG
+   echo "AX25 AXIP mode (0=Datagram* 1=VirtConnection)      : `cat /proc/sys/net/ax25/ax0/ip_default_mode`"
+   echo "AX25 AXIP mode (0=Datagram* 1=VirtConnection)      : `cat /proc/sys/net/ax25/ax0/ip_default_mode`" >> $LOG
+   echo "AX25 max packet size (256*)                        : `cat /proc/sys/net/ax25/ax0/maximum_packet_length`"
+   echo "AX25 max packet size (256*)                        : `cat /proc/sys/net/ax25/ax0/maximum_packet_length`" >> $LOG
+   echo "AX25 max packet retry count (10*)                  : `cat /proc/sys/net/ax25/ax0/maximum_retry_count`"
+   echo "AX25 max packet retry count (10*)                  : `cat /proc/sys/net/ax25/ax0/maximum_retry_count`" >> $LOG
+   echo "AX25 protcol version (DAMA Slave)                  : `cat /proc/sys/net/ax25/ax0/protocol`"
+   echo "AX25 protcol version  (DAMA Slave)                 : `cat /proc/sys/net/ax25/ax0/protocol`" >> $LOG
+   echo "AX25 STD window size (num of unacked packets 2* )  : `cat /proc/sys/net/ax25/ax0/standard_window_size`"
+   echo "AX25 STD window size (num of unACKed packets 2*)   : `cat /proc/sys/net/ax25/ax0/standard_window_size`" >> $LOG
+   echo "AX25 T1 timer (unacked packet retry 10000mS*)      : `cat /proc/sys/net/ax25/ax0/t1_timeout`"
+   echo "AX25 T1 timer (unacked packet retry 10000mS*)      : `cat /proc/sys/net/ax25/ax0/t1_timeout`" >> $LOG
+   echo "AX25 T2 timer (wait for 2nd RX packet 3000mS*)     : `cat /proc/sys/net/ax25/ax0/t2_timeout`"
+   echo "AX25 T2 timer (wait for 2nd RX packet 3000mS*)     : `cat /proc/sys/net/ax25/ax0/t2_timeout`" >> $LOG
+   echo "AX25 T3 timer (link still up check 300000mS*)      : `cat /proc/sys/net/ax25/ax0/t3_timeout`"
+   echo "AX25 T3 timer (link still up check 300000mS*)      : `cat /proc/sys/net/ax25/ax0/t3_timeout`" >> $LOG
+}
+
+
+# -----------------------------------------------------------------------------
+# Main code
+
+
+#Pre checks
+#-----------
+if [ ! -f $LISTEN ]; then
+   echo -e "\nListen binary at $LISTEN doesn't exist.  Maybe it should be axlisten?  Aborting\n"
+   echo -e "\nListen binary at $LISTEN doesn't exist.  Maybe it should be axlisten?  Aborting\n" >> $LOG
+   exit 1
+fi
+
+
+# --------------------------
+# Setup
+
+echo -e "-----------------------\nax25-up.new starting up\n"
+echo -e "-----------------------\nax25-up.new starting up\n" >> $LOG
+date
+date  >> /var/log/packet.log
+
+if [ $TNCTYPE = "tncpi" ]; then
+   echo "TNC Type: tncpi"
+   echo "TNC Type: tncpi" >> $LOG
+
+   #Setup the TNC-Pi before the AX25 stack comes up - This requires that
+   # the I2C bus is re-enabled in the raspi-blacklist.conf and /etc/modules files and the 
+   # parms tools are installed
+   #
+   echo "Configuring TNC-Pi parameters"
+   echo "Configuring TNC-Pi parameters" >> $LOG
+   # Check for a TX Delay of 25
+   #   09/27/13 - 15 might not be enough for the THF6A
+   #
+   if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep TXDelay | awk '{print $8}'`" -ne "25" ]; then
+      #value 1 - I2C Bus,  #2 is I2C device,  #3 is parameter id,  #4 is parameter value
+      echo -en "[TX Delay] "
+      echo -en "[TX Delay] " >> $LOG
+      /usr/local/src/tnc-pi/parms/pitnc_setparams 1 0 1 25 > /dev/null
+      CHKERR
+      if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep TXDelay | awk '{print $8}'`" -ne "25" ]; then
+         echo -e "\nERROR: TNC-Pi not accepting new TX Delay value"
+         echo -e "\nERROR: TNC-Pi not accepting new TX Delay value" >> $LOG
+         exit 1
+      fi
+   fi
+   # Check for a Persisteance of 64
+   if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep Persistance | awk '{print $3}'`" -ne "64" ]; then
+      echo -en "[Persistance] "
+      echo -en "[Persistance] " >> $LOG
+      /usr/local/src/tnc-pi/parms/pitnc_setparams 1 0 2 64 > /dev/null
+      CHKERR
+      if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep Persistance | awk '{print $3}'`" -ne "64" ]; then
+         echo -e "\nERROR: TNC-Pi not accepting new Persistance value"
+         echo -e "\nERROR: TNC-Pi not accepting new Persistance value" >> $LOG
+         exit 1
+      fi
+   fi
+   # Check for a Slot time of 100
+   if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep Slottime | awk '{print $6}'`" -ne "10" ]; then
+      echo -en "[Slottime] "
+      echo -en "[Slottime] " >> $LOG
+      /usr/local/src/tnc-pi/parms/pitnc_setparams 1 0 3 10 > /dev/null
+      CHKERR
+      if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep Slottime | awk '{print $6}'`" -ne "10" ]; then
+         echo -e "\nERROR: TNC-Pi not accepting new Slot Time value"
+         echo -e "\nERROR: TNC-Pi not accepting new Slot Time value" >> $LOG
+         exit 1
+      fi
+   fi
+   # Check for a TX Tail of 0
+   if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep TXTail | awk '{print $3}'`" -ne "0" ]; then
+      echo -e "[TXTail]"
+      echo -e "[TXTail]"  >> $LOG
+      /usr/local/src/tnc-pi/parms/pitnc_setparams 1 0 4 0 > /dev/null
+      CHKERR
+      if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep TXTail | awk '{print $3}'`" -ne "0" ]; then
+         echo -e "\nERROR: TNC-Pi not accepting new TXTail value"
+         echo -e "\nERROR: TNC-Pi not accepting new TXTail value" >> $LOG
+         exit 1
+      fi
+   fi
+fi
+
+
+#Only run if AXUDP is enabled - if so, will be AX0
+if [ -n "`grep ^axudp /etc/ax25/axports`" ]; then
+   #---- Device: AX0 ----
+   echo "Installing ax25ipd Unix98 master pseudo tty"
+   echo "Installing ax25ipd Unix98 master pseudo tty" >> $LOG
+   /bin/date >> $LOG
+   /usr/sbin/ax25ipd  > /tmp/unix98
+   CHKERR
+   echo $! > /var/run/ax25ipd.pid
+   export AXUDP=`tail -1 /tmp/unix98`
+   #
+   echo "Installing a KISS link on ethernet port"
+   echo "Installing a KISS link on ethernet port" >> $LOG
+   $KISSATTACH $AXUDP axudp  > /tmp/ax25-config.tmp
+   CHKERR
+   awk '/device/ { print $7 }' /tmp/ax25-config.tmp > /tmp/ax25-config0-tmp
+   read Device < /tmp/ax25-config0-tmp
+   # Check for Device
+   if [ -d /proc/sys/net/ax25/$Device ]; then 
+       echo -e "\nPort axudp attached to $Device"
+       echo -e "\nPort axudp attached to $Device" >> $LOG
+       cd /proc/sys/net/ax25/$Device/
+   # $Device parameters
+   # ifconfig $Device netmask 255.255.255.255
+   # ifconfig $Device broadcast 0.0.0.0
+     else echo "** Error setting $Device parms **"
+   fi
+   /bin/sleep 4
+  else
+   echo "axudp port not enabled in /etc/ax25/axports.. skipping"
+   echo "axudp port not enabled in /etc/ax25/axports.. skipping" >> $LOG
+fi
+
+
+#Second device - AX0 or AX1 depending if above ran
+#
+
+if [ $TNCTYPE = "tncpi" ]; then
+   echo "Installing one KISS connexions on serial port ttyAMA0"
+   echo "Installing one KISS connexions on serial port ttyAMA0" >> $LOG
+   # vhfdrop are ports names in /etc/ax25/axports
+   $MKISS -s 19200 -x 1 /dev/ttyAMA0 > /tmp/unix98
+   CHKERR
+   export PTS0=`more /tmp/unix98 | grep -w /dev | cut -b -11`
+   $KISSATTACH $PTS0 $AXINT  > /tmp/ax25-config.tmp
+   CHKERR
+   awk '/device/ { print $7 }' /tmp/ax25-config.tmp > /tmp/ax25-config1-tmp
+   read Device < /tmp/ax25-config1-tmp
+fi
+
+if [ $TNCTYPE = "direwolf" ]; then
+   echo "TNC Type: direwolf"
+   echo "TNC Type: direwolf" >> $LOG
+   echo "Restoring audio levels on soundcard"
+   echo "Restoring audio levels on soundcard" >> $LOG
+   alsactl restore
+   echo "Starting direwolf"
+   echo "Starting direwolf" >> $LOG
+   $DIREWOLF -t 0 -c $DIREWOLFCONF -p >> $LOG 2>&1 &
+   #Running CHKERR here won't work as direwolf starts in the background
+   sleep 5
+   if [ -z "`ps ax | grep -v grep | grep direwolf`" ]; then
+      echo -e "\nERROR: Direwolf did not start properly and is not running, please review $LOG"
+      echo -e "\nERROR: Direwolf did not start properly and is not running, please review $LOG" >> $LOG
+      exit 1
+   fi
+   echo "Installing one KISS connection on PTY port /tmp/kisstnc"
+   echo "Installing one KISS connection on PTY port /tmp/kisstnc" >> $LOG
+   #The speed setting here doesn't matter much for Direwolf but keep it aligned
+   # with the setting in /etc/ax25/axports
+   $MKISS -s 19200 -x 1 /tmp/kisstnc > /tmp/unix98
+   CHKERR
+   #This creates a PTS interface like "/dev/pts/3"
+   export PTS0=`more /tmp/unix98 | grep -w /dev | cut -b -11`
+   echo "PTS0 device: $PTS0"
+   echo "PTS0 device: $PTS0" >> $LOG
+   $KISSATTACH $PTS0 $AXINT  > /tmp/ax25-config.tmp
+   CHKERR
+   awk '/device/ { print $7 }' /tmp/ax25-config.tmp > /tmp/ax25-config1-tmp
+   read Device < /tmp/ax25-config1-tmp
+fi
+
+if [ $TNCTYPE = "d74" ]; then
+  echo -e "TNC Type: Kenwood D74 support"
+  echo -e "TNC Type: Kenwood D74 support" >> $LOG
+  #Placeholder section
+  echo -e "   D74: setup is currently in /usr/local/sbin/bt-kiss-bringup.sh today"
+fi
+
+
+#dranch: keyup and down times need to be in terms of ms and not tens of ms
+# Direwolf traps the changes here but the kissparm command itself is silent
+#
+echo -e "Setting advanced Linux AX25 stack settings - part 1"
+echo -e "Setting advanced Linux AX25 stack settings - part 1" >> $LOG
+echo -e "   Values only shown in /var/log/packet.log file via Direwolf's STDOUT)"
+echo -e "   Values only shown in /var/log/packet.log file via Direwolf's STDOUT)" >> $LOG
+#  Half duplex, TXDELAY of 400ms, SLOTTIME of 100ms, PERSIST of 63 (out of 256), TXtail of 50ms
+#
+#Good on Alinco DJ-580 with Rpi to GPIO and simple keying circuit
+# Man pages say 10ms units, Direwolf and listening says they are 1ms units
+$KISSPARMS -p $AXINT -f n -t $TXDELAY -s 100 -r 63 -l $TXTAIL
+CHKERR
+
+#Set advanced AX25 stack settings : specifically AX.25 window settings via
+#  tools from ftp://ftp.febo.com/pub/linux_ham/axgetparms
+#  To use this section, you must first run /usr/local/sbin/axsetparms.sh
+#  to populate all settings in that dir and then below, they can be restored
+if [ -d /etc/ax25/parms/ax0 ]; then
+   echo -e "Setting advanced Linux AX25 stack settings - part 2"
+   /usr/local/sbin/axsetparms.sh
+  else
+   echo -e "No advanced axsetparms.sh AX.25 values found.  Skipping"
+fi
+
+
+#Display AX25 protocol stack items
+SHOWAXSETTINGS
+
+if [ $TNCTYPE != "d74" ]; then
+   # Check for Device
+   if [ -d /proc/sys/net/ax25/$Device ]; then 
+      echo -e "\nPort $AXINT attached to $Device"
+      echo -e "\nPort $AXINT attached to $Device" >> $LOG
+      cd /proc/sys/net/ax25/$Device/
+      #Device parameters
+      $IP address add $IPADDR dev ax0
+     else echo "** Error setting $Device parms **"
+   fi
+fi
+
+/bin/sleep 4
+
+
+# NOTE: Specifically for APRS traffic logging, it's probably superior to use 
+#       Direwolf's native logging which supports compressed posits instead.  
+#       This is activated via LOGDIR in the direwolf.conf file and is 
+#       automatically rotated daily
+#
+#Open Listen on Term 6
+#8 is 8bit; a is bidir; c is color but doesnt allow scrollback; r is readible; p is port
+echo -e "Listen started and displaying on tty8"
+echo -e "Listen started and displaying on tty8" >> $LOG
+#Using new VE7FET repo option that reverse previous -t option meaning
+$LISTEN -arc > /dev/tty8 &
+CHKERR
+echo -e "\nListen started and logging to /var/log/ax25-listen.log"
+echo -e "\nListen started and logging to /var/log/ax25-listen.log"  >> $LOG
+$LISTEN -8ar >> /var/log/ax25-listen.log 2>&1 &
+CHKERR
+echo $! > /var/run/listen.pid
+
+cd /etc/ax25
+
+#Start second phase
+#echo "ax25-up.new2 disabled"
+echo "Preparing for ax25-up.new2 - sleep for 4 seconds"
+sleep 4
+/etc/ax25/ax25-up.new2 $TNCTYPE

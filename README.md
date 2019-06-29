@@ -4,7 +4,7 @@ IMPORTANT: You must obtain a [Sysop Winlink account](https://www.winlink.org/con
 
 ## 1. Update package list
 	sudo apt-get update
-	sudo apt-get install build-essential autoconf libtool git
+	sudo apt-get install build-essential autoconf libtool git psmisc net-tools
 
 ## 2. Install the VE7FET AX.25 packages
 

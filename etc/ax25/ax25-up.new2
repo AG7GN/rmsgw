@@ -1,0 +1,149 @@
+#!/bin/bash
+
+# dranch
+
+# Start "Other" packet Services
+
+# 10/20/18 - Fixed broken beacon; added secondary beacon to start things
+#            immediatedly due to known Linux ax.25 first packet issue
+# 08/04/18 - Changed Linpac to start later
+# 09/01/17 - Fixed lines not using $LOG variable; Added Linpac start
+# 08/30/17 - changed the path for beacon, ax25d, mheardd, 
+#          - Added logic to check for the rc.netrom file
+# 05/11/15 - log variable use
+
+
+# This script can start up optional advanced packet tools.  Most options
+# are disabled by default.  You will need to properly configure those
+# services before you enable them here to be started up
+
+# Beacon message
+BEACON='_BEACON_'
+
+#LOG destination
+#----------------
+LOG="/var/log/packet.log"
+
+echo -e "-----------------------\nax25-up.new2 starting up\n"
+echo -e "-----------------------\nax25-up.new2 starting up\n" >> $LOG
+date
+date  >> $LOG
+
+if [ -z "`ifconfig | grep -v grep | grep ax0`" ]; then
+   echo -e "ax25-up.new2: ax0 interface is not up.. aborting"
+   echo -e "ax25-up.new2: ax0 interface is not up.. aborting" >> $LOG
+   exit 1
+fi
+
+# Start NetRom
+if [ -f /etc/ax25/rc.netrom ]; then
+   /etc/ax25/rc.netrom
+   echo -e "\nNetRom Started"
+   echo -e "\nNetRom Started" >> $LOG
+   #/bin/sleep 4
+fi
+
+# Start ROSE / FPAC 
+#
+#  barfs w/o live network 
+# echo -e "ROSE - FPAC Starting"
+# echo -e "ROSE - FPAC Starting" >> $LOG
+# /etc/ax25/myfpac.sh start
+#/bin/sleep 4
+
+
+# Start BBS FBB 
+#  echo -e "\nFBB BBS Started"
+#  echo -e "\nFBB BBS Started" >> $LOG
+# /etc/ax25/rc.fbb start
+#/bin/sleep 4
+
+#Open Dx cluster Spider on Term 5
+#echo -e "\nDX Spider starting and displaying on tty5"
+#echo -e "\nDX Spider starting and displaying on tty5" >> $LOG
+#/usr/bin/perl -w /spider/perl/cluster.pl >/dev/tty5 &
+
+# Start DxGet application for Dx spots broadcast on AX.25 port
+# echo -e "\nDxGet for Dx spots on AX.25 port"
+# echo -e "\nDxGet for Dx spots on AX.25 port" >> $LOG
+#/etc/ax25/rc.dxget
+
+# Set Beacon for Port vhfdrop 
+# Running beacon in Linux vs. doing it in Direwolf
+# Running TWICE as the first beacon seems to get eaten on startup
+#   second one is a one-shot beacon
+#  /usr/sbin/beacon \
+#	-c ki6zhd-6 \
+#	-d 'info' \
+#	-t 15 \
+#	vhfdrop \
+#	"low-level KB2KB netrom node in Santa Clara  "
+# echo $! > /var/run/beacon.pid
+# echo -e "\nbeacon started"
+# echo -e "\nbeacon started" >> $LOG
+
+## Enable External Logons
+  /usr/sbin/ax25d &
+  echo $! > /var/run/ax25d.pid
+  echo -e "\nax25d started"
+  echo -e "\nax25d started" >> $LOG
+
+# APRS beacon & repeater
+#  disabled as it only supports static GPS coordinates
+#  /usr/sbin/aprslist > /dev/null
+#  echo -e "\nAPRS digi & beacon started"
+#  echo -e "\nAPRS digi & beacon started"  >> $LOG
+
+# Start Mheard daemon
+ /usr/sbin/mheardd
+  echo $! > /var/run/mheard.pid
+  echo -e "\nmheardd Started"
+  echo -e "\nmheardd Started"  >> $LOG
+
+# Start LinPac
+if [ -f /root/LinPac/macro/init.mac ]; then
+   /usr/share/linpac/contrib/start-linpac.sh
+   if [ $? -ne 0 ]; then
+      echo -e "LinPac failed to start"
+      echo -e "LinPac failed to start" >> $LOG
+     else
+   echo -e "\nLinPac Started"
+   echo -e "\nLinPac Started" >> $LOG
+   fi
+fi
+
+# Start beacon
+if test -x /usr/sbin/beacon
+then
+   /usr/sbin/beacon $2 "$BEACON"
+   echo $! > /var/run/beacon.pid
+   echo -e "\nbeacon started"
+   echo -e "\nbeacon started" >> $LOG
+fi
+
+
+## Start n7nix dantracker
+##
+##   NOTE:  this startup is looking for a specific yet stupidly generic
+##          Prolific serial to USB device to mean the GPS is connected
+##          not a great idea but that's I'll I can work with at the moment
+##
+#  #echo -e "\ndantracker currently disabled from starting"
+#  #echo -e "\ndantracker currently disabled from starting" >> $LOG
+#
+#  if [ -n "`lsusb | grep 067b:2303`" ]; then
+#     /etc/tracker/tracker-up 
+#     echo -e "\nUdrtracker with GPS started"
+#     echo -e "\nUdrtracker with GPS started" >> $LOG
+#    else
+#     /etc/tracker/tracker-up nogps
+#     echo -e "\nUdrtracker with NO gps started"
+#     echo -e "\nUdrtracker with NO gps started" >> $LOG
+#  fi
+
+echo -e "\nax25-up.new2 done\n"
+echo -e "\nax25-up.new2 done\n" >> $LOG
+
+#echo Some message | sudo tee /dev/kmesg
+echo "ax.25 & apps up" > /dev/kmesg
+

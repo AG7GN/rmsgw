@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rmschannels xmlns="http://www.namespace.org"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="file:///etc/rmsgw/channels.xsd">
+	<channel name="wl2kgw" type="ax25" active="yes">
+	   <basecall>_CALL_</basecall>
+		<callsign>_CALL_-_SSID_</callsign>
+		<password>_PASSWORD_</password>
+		<gridsquare>_GRID__</gridsquare>
+		<frequency>_FREQ_</frequency>
+		<mode>0</mode>
+		<autoonly>0</autoonly>
+		<baud>_MODEM_</baud>
+		<power>_POWER_</power>
+		<height>_HEIGHT_</height>
+		<gain>_GAIN_</gain>
+		<direction>_DIR_</direction>
+		<hours>_HOURS_</hours>
+		<groupreference>1</groupreference>
+		<servicecode>_SERVICE_</servicecode>
+		<statuschecker>
+  			/usr/local/bin/rmschanstat.local $type $name $callsign
+		</statuschecker>
+	</channel>
+</rmschannels>

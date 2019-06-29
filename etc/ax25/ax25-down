@@ -1,0 +1,139 @@
+#!/bin/bash
+
+# Script by dranch@trinnet.net for the Rpi AX25 project
+# Original script by C Schuman, k4gbb k4gbb1@gmail.com
+
+# Description: Shuts down Ax.25 services.
+# This script can stop up optional advanced packet tools.  Most options
+# are disabled by default.  You will need to properly configure those
+# services before you enable them here to be stopped
+
+# 11/04/18 - Silenced proc device warning
+# 10/11/18 - Minor formatting changes
+# 08/30/17 - Disabled more services by default
+#          - fixed path for nodesave
+# 08/14/16 - Support more selective shutdowns
+# 05/11/15 - use the LOG variable
+# 03/01/14 - updated
+# 09/27/13 - Original version
+
+
+# LOG path
+#---------
+LOG="/var/log/packet.log"
+ 
+
+echo -e "\nShutting down Linpac"
+echo -e "\nShutting down Linpac" >> $LOG
+/usr/bin/killall linpac > /dev/null
+
+if [ -f /etc/tracker/tracker-down ]; then 
+   # Stop N7NIX DanTracker
+   echo "Shutting down DanTracker"
+   echo "Shutting down DanTracker" >> $LOG
+   /etc/tracker/tracker-down
+fi
+
+if [ -f /usr/local/etc/ax25/myfpac.sh ]; then
+   # Stop FPAC
+   echo "Stopping FPAC"
+   echo "Stopping FPAC" >> $LOG
+   /usr/local/etc/ax25/myfpac.sh stop
+fi
+
+if [ -f /etc/ax25/rc.fbb ]; then
+   # Stop BBS
+   echo "Stopping FBB"
+   echo "Stopping FBB" >> $LOG
+   /etc/ax25/rc.fbb stop
+fi
+
+if [ -f /etc/ax25/nrports ]; then
+   # Save NetRom routes
+   /usr/sbin/nodesave -p /usr/sbin/ /var/ax25/nrsave 
+   echo "N/R routes saved"
+   echo "N/R routes saved" >> $LOG
+fi
+
+
+# Stop Ax25 support
+  for PROC_NAME in beacon ax25d ax25ipd ax25rtd mheardd listen saxIgate
+    do
+      PID=`/bin/pidof -x $PROC_NAME`
+      if [ -n "$PID" ]; then
+         echo "Ending $PROC_NAME - $PID "
+         echo "Ending $PROC_NAME - $PID " >> $LOG
+         kill -TERM $PID > /dev/null
+         sleep 1
+      fi
+    done
+
+
+if [ -f /etc/ax25/aprslist.conf ]; then
+   echo "Stopping aprslist"
+   echo "Stopping aprslist" >> $LOG
+   /usr/bin/killall aprslist
+fi
+
+
+# If netromd is running
+pidof netromd > /dev/null
+if [ $? -eq 0 ]; then
+   # Stop NetRom
+   /usr/bin/killall netromd > /dev/null
+   /sbin/ifconfig nr0 down
+   /sbin/ifconfig nr1 down
+   /sbin/ifconfig nr2 down
+   echo "Stopping Netrom"
+   echo "Stopping Netrom" >> $LOG
+fi
+
+#Shutdown ROSE interfaces
+ifconfig | grep rose 2>&1 > /dev/null
+if [ $? -eq 0 ]; then
+   echo "Stopping Rose"
+   echo "Stopping Rose" >> $LOG
+   /sbin/ifconfig rose0 down
+fi
+
+
+#echo "Stopping mailbbs"
+#echo "Stopping mailbbs" >> $LOG
+#/usr/bin/killall -KILL mailbbs > /dev/null
+
+echo "Stopping Kissattach"
+echo "Stopping Kissattach" >> $LOG
+/usr/bin/killall -KILL kissattach > /dev/null
+/usr/bin/killall -KILL spattach   > /dev/null
+
+# Close sockets
+echo "Detach Ax/Nr/Sp Devices"
+echo "Detach Ax/Nr/Sp Devices" >> $LOG
+echo "$(ls /proc/sys/net/ax25 2>&1)" > /tmp/ax25-config.tmp
+read Select < /tmp/ax25-config.tmp
+i=0
+while [ "$Select" != "" ]
+ do
+ let i=i+1
+ awk ' NR == '$i' { print $1 }' /tmp/ax25-config.tmp > /tmp/ax25-config-tmp
+ read Select < /tmp/ax25-config-tmp
+  if [ "$Select" != "" ]; then 
+   ifconfig "$Select" down
+   echo " $Select stopped"
+   echo " $Select stopped" >> $LOG
+  fi
+done
+
+echo "Stopping mkiss"
+echo "Stopping mkiss" >> $LOG
+/usr/bin/killall -KILL mkiss      > /dev/null
+
+if [ -f /etc/ax25/direwolf.conf ]; then
+   #If direwolf is being used
+   echo "Stopping Direwolf"
+   echo "Stopping Direwolf" >> /var/log/packet.log
+   /usr/bin/killall direwolf
+fi
+
+echo -e "Ax25 Stopped\n"
+echo -e "Ax25 Stopped\n" >> /var/log/packet.log
