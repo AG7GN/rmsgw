@@ -1,6 +1,10 @@
-# Building an RMS Gateway on Raspberry Pi Stretch
+# Building an RMS Gateway on Raspberry Pi running Debian 10 (Buster)
 
 IMPORTANT: You must obtain a [Sysop Winlink account](https://www.winlink.org/content/join_gateway_sysop_team_sysop_guidelines) in order to operate an RMS Gateway.
+
+IMPORTANT: To install the RMS Gateway, run the __install-rmsgw.sh__ script that is part of this package.  Once that is installed, run the __configure-rmsgw.sh__ script to configure and start the RMS Gateway.
+
+The following is a summary of most of the steps that the __install-rmsgw.sh__ performs to install the RMS Gateway.  It is for documentation only - __USE THE SCRIPT TO INSTALL__!
 
 ## 1. Update package list
 	sudo apt-get update
@@ -194,18 +198,8 @@ Change __GWCALL__ and __GRIDSQUARE__ as needed.
 	sudo apt-get install texinfo build-essential autoconf libtool git
 
 ### 4.2 Install
-	cd ~
-	sudo dpkg --install hamlib_4.0-1_armhf.deb
-	
-Direwolf (and maybe other apps that use hamlib) looks for `libhamlib.so.2` which the latest version of Hamlib does not provide, so make a symlink for it:
-	
-	cd /usr/local/lib
-	sudo ln -s libhamlib.so.4.0.0 libhamlib.so.2
-	sudo ldconfig
 
-Prevent overwriting the latest hamlib package we just installed by the very old stock version:
-
-	sudo apt-mark hold hamlib
+	sudo apt-get install libhamlib2 libhamlib-dev
 	
 ## 5. Install Direwolf
 

@@ -1,0 +1,53 @@
+# Version 1.0.3
+*filter
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT ACCEPT [0:0]
+:ICMPFLOOD - [0:0]
+:SSHBRUTE - [0:0]
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -m conntrack --ctstate INVALID -j DROP
+-A INPUT -s 127.0.0.0/8 ! -i lo -j DROP
+-A INPUT -i wlan0 -p udp -m multiport --dports 67,53 -j ACCEPT
+-A INPUT -m addrtype --dst-type BROADCAST -j DROP
+-A INPUT -p udp --dport 5353 -d 224.0.0.251 -j ACCEPT
+-A INPUT -m addrtype --dst-type MULTICAST -j DROP
+-A INPUT -m addrtype --dst-type ANYCAST -j DROP
+-A INPUT -d 224.0.0.0/4 -j DROP
+-A INPUT -p tcp -m tcp --dport 22 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j SSHBRUTE
+-A INPUT -p tcp -m tcp --dport 5900 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8000 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8001 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8010 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8011 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8100 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8080 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p icmp -m icmp --icmp-type 0 -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p icmp -m icmp --icmp-type 3 -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p icmp -m icmp --icmp-type 11 -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p icmp -m icmp --icmp-type 8 -m conntrack --ctstate NEW -j ICMPFLOOD
+-A INPUT -p udp -m multiport --dports 135,445 -j DROP
+-A INPUT -p udp -m udp --dport 137:139 -j DROP
+-A INPUT -p udp -m udp --sport 137 --dport 1024:65535 -j DROP
+-A INPUT -p tcp -m multiport --dports 135,139,445 -j DROP
+-A INPUT -p udp -m udp --dport 1900 -j DROP
+-A INPUT -p udp -m udp --sport 53 -j DROP
+-A INPUT -p tcp -m tcp --dport 113 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j REJECT --reject-with tcp-reset
+-A INPUT -m limit --limit 1/sec --limit-burst 100 -j NFLOG --nflog-group 0 --nflog-prefix "iptables[DOS]: "
+-A OUTPUT -o ax0 -d 224.0.0.22 -p igmp -j DROP
+-A OUTPUT -o ax0 -d 224.0.0.251 -p udp -m udp --dport 5353 -j DROP
+-A OUTPUT -o ax0 -d 239.255.255.250 -p udp -m udp  -j DROP
+-A OUTPUT -o ax1 -d 224.0.0.22 -p igmp -j DROP
+-A OUTPUT -o ax1 -d 224.0.0.251 -p udp -m udp --dport 5353 -j DROP
+-A OUTPUT -o ax1 -d 239.255.255.250 -p udp -m udp  -j DROP
+-A ICMPFLOOD -m recent --set --name ICMP --mask 255.255.255.255 --rsource
+-A ICMPFLOOD -m recent --update --seconds 1 --hitcount 6 --rttl --name ICMP --mask 255.255.255.255 --rsource -m limit --limit 1/sec --limit-burst 1 -j NFLOG --nflog-group 0 --nflog-prefix "iptables[ICMP-flood]: "
+-A ICMPFLOOD -m recent --update --seconds 1 --hitcount 6 --rttl --name ICMP --mask 255.255.255.255 --rsource -j DROP
+-A ICMPFLOOD -j ACCEPT
+-A SSHBRUTE -m recent --set --name SSH --mask 255.255.255.255 --rsource
+-A SSHBRUTE -m recent --update --seconds 300 --hitcount 10 --name SSH --mask 255.255.255.255 --rsource -m limit --limit 1/sec --limit-burst 100 -j NFLOG --nflog-group 0 --nflog-prefix "iptables[SSH-brute]: "
+-A SSHBRUTE -m recent --update --seconds 300 --hitcount 10 --name SSH --mask 255.255.255.255 --rsource -j DROP
+-A SSHBRUTE -j ACCEPT
+COMMIT
+# 

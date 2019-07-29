@@ -1,0 +1,60 @@
+# Version 1.0.3
+*filter
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT ACCEPT [0:0]
+:ICMPFLOOD - [0:0]
+:SSHBRUTE - [0:0]
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -m conntrack --ctstate INVALID -j DROP
+-A INPUT -s ::1/128 ! -i lo -j DROP
+-A INPUT -i wlan0 -p udp -m multiport --dports 67,53 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 22 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j SSHBRUTE
+-A INPUT -p tcp -m tcp --dport 5900 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8000 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8001 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8010 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8011 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8100 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8080 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
+-A INPUT -p udp --dport 5353 -d ff02::fb -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 133 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 134 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 136 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 137 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 141 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 142 -j ACCEPT
+-A INPUT -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -j ACCEPT
+-A INPUT -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 131 -j ACCEPT
+-A INPUT -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 132 -j ACCEPT
+-A INPUT -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 148 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 149 -j ACCEPT
+-A INPUT -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 151 -j ACCEPT
+-A INPUT -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 152 -j ACCEPT
+-A INPUT -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 153 -j ACCEPT
+-A INPUT -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ICMPFLOOD
+-A INPUT -p udp -m multiport --dports 135,445 -j DROP
+-A INPUT -p udp -m udp --dport 137:139 -j DROP
+-A INPUT -p udp -m udp --sport 137 --dport 1024:65535 -j DROP
+-A INPUT -p tcp -m multiport --dports 135,139,445 -j DROP
+-A INPUT -p udp -m udp --dport 1900 -j DROP
+-A INPUT -p udp -m udp --sport 53 -j DROP
+-A INPUT -p tcp -m tcp --dport 113 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j REJECT --reject-with tcp-reset
+-A INPUT -m limit --limit 1/sec --limit-burst 100 -j NFLOG --nflog-group 0 --nflog-prefix "ip6tables[DOS]: "
+-A ICMPFLOOD -m recent --set --name ICMP --mask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff --rsource
+-A ICMPFLOOD -m recent --update --seconds 1 --hitcount 6 --rttl --name ICMP --mask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff --rsource -m limit --limit 1/sec --limit-burst 1 -j NFLOG --nflog-group 0 --nflog-prefix "ip6tables[ICMP-flood]: "
+-A ICMPFLOOD -m recent --update --seconds 1 --hitcount 6 --rttl --name ICMP --mask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff --rsource -j DROP
+-A ICMPFLOOD -j ACCEPT
+-A SSHBRUTE -m recent --set --name SSH --mask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff --rsource
+-A SSHBRUTE -m recent --update --seconds 300 --hitcount 10 --name SSH --mask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff --rsource -m limit --limit 1/sec --limit-burst 100 -j NFLOG --nflog-group 0 --nflog-prefix "ip6tables[SSH-brute]: "
+-A SSHBRUTE -m recent --update --seconds 300 --hitcount 10 --name SSH --mask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff --rsource -j DROP
+-A SSHBRUTE -j ACCEPT
+COMMIT
+# 

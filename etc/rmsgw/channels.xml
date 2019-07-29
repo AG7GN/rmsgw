@@ -6,7 +6,7 @@
 	   <basecall>_CALL_</basecall>
 		<callsign>_CALL_-_SSID_</callsign>
 		<password>_PASSWORD_</password>
-		<gridsquare>_GRID__</gridsquare>
+		<gridsquare>_GRID_</gridsquare>
 		<frequency>_FREQ_</frequency>
 		<mode>0</mode>
 		<autoonly>0</autoonly>

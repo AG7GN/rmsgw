@@ -1,0 +1,20 @@
+/var/log/rms
+/var/log/rms.debug
+/var/log/ax25-listen.log
+/var/log/packet.log {
+   daily
+   missingok
+   rotate 5
+   compress
+   #delaycompress
+   compresscmd /bin/bzip2
+   uncompresscmd /bin/bunzip2
+   compressoptions -9
+   compressext .bz2
+   notifempty
+   copytruncate
+   create 640 root adm
+   #postrotate
+   #   cp -u /var/log/*.bz2 /logarchive/ > /dev/null
+   #endscript
+}

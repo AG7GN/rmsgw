@@ -12,6 +12,7 @@
 
 # modified by dranch@trinnet.net
 #
+# 07/07/19 - Updated by Steve Magnuson, AG7GN
 # 11/10/18 - Added restoring advanced ax25 settings
 # 11/04/18 - Added IPoverAX25 support
 # 10/21/18 - Updated listen parameters for new listen -t syntax
@@ -44,22 +45,45 @@ export TZ
 
 #Binaries
 #--------
-DIREWOLF=/usr/bin/direwolf
+DWUSER=_DWUSER_ # Run direwolf as this user instead of root.
+DIREWOLF="/usr/bin/direwolf"
 MKISS=/usr/sbin/mkiss
 KISSATTACH=/usr/sbin/kissattach
 IP=/bin/ip
 KISSPARMS=/usr/sbin/kissparms
 LISTEN=/usr/bin/listen
-
+IPTABLES=/sbin/iptables
+IP6TABLES=/sbin/iptables
+TNC_GET=/usr/local/bin/pitnc_getparams
+TNC_SET=/usr/local/bin/pitnc_setparams
 
 #Variables for system settings
 #-----------------------------
 #TNC Type: tncpi or direwolf
 TNCTYPE=_TNC_
 #TNC timing settings
+#AXINT=vhfdrop
 AXINT=wl2kgw
 TXDELAY=400
-TXTAIL=50
+TXTAIL=0
+SPEED=_MODEM_
+case $SPEED in
+	9600)
+		TNC_SPEED=96
+		TNC_TXDELAY=50
+		TNC_TXTAIL=0
+		TNC_PERSIST=160
+		TNC_SLOT=10
+		;;
+	*) # 1200
+		TNC_SPEED=12
+		TNC_TXDELAY=25
+		TNC_TXTAIL=0
+		TNC_PERSIST=64
+		TNC_SLOT=20
+		;;
+esac
+TNC_DEV=/dev/serial0
 #Placeholder IP address for ax25 interface if you wish to run IP over AX25
 IPADDR="44.127.0.1/24"
 
@@ -72,6 +96,8 @@ DIREWOLFCONF=/etc/ax25/direwolf.conf
 #LOG destination
 #----------------
 LOG="/var/log/packet.log"
+touch "$LOG"
+sudo chown $DWUSER "$LOG"
 
 # Functions
 # ---------
@@ -154,57 +180,74 @@ if [ $TNCTYPE = "tncpi" ]; then
    #
    echo "Configuring TNC-Pi parameters"
    echo "Configuring TNC-Pi parameters" >> $LOG
+	# Check for mode (1200 or 9600)
+	if [ "$($TNC_GET $TNC_DEV 0 | grep "Mode Speed" | awk '{print $4}' | sed 's/00//')" -ne "$TNC_SPEED" ]; then
+      #value 1 - I2C Bus,  #2 is I2C device,  #3 is parameter id,  #4 is parameter value
+      echo -en "[Mode Speed] "
+      echo -en "[Mode Speed] " >> $LOG
+      $TNC_SET $TNC_DEV 0 8 $TNC_SPEED > /dev/null
+      CHKERR
+		if [ "$($TNC_GET $TNC_DEV 0 | grep "Mode Speed" | awk '{print $4}' | sed 's/00//')" -ne "$TNC_SPEED" ]; then
+         echo -e "\nERROR: TNC-Pi not accepting new Mode Speed value"
+         echo -e "\nERROR: TNC-Pi not accepting new Mode Speed value" >> $LOG
+         exit 1
+      fi
+   fi
    # Check for a TX Delay of 25
    #   09/27/13 - 15 might not be enough for the THF6A
    #
-   if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep TXDelay | awk '{print $8}'`" -ne "25" ]; then
+	if [ "$($TNC_GET $TNC_DEV 0 | grep TXDelay | awk '{print $8}')" -ne "$TNC_TXDELAY" ]; then
       #value 1 - I2C Bus,  #2 is I2C device,  #3 is parameter id,  #4 is parameter value
       echo -en "[TX Delay] "
       echo -en "[TX Delay] " >> $LOG
-      /usr/local/src/tnc-pi/parms/pitnc_setparams 1 0 1 25 > /dev/null
+      $TNC_SET $TNC_DEV 0 1 $TNC_TXDELAY > /dev/null
       CHKERR
-      if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep TXDelay | awk '{print $8}'`" -ne "25" ]; then
+		if [ "$($TNC_GET $TNC_DEV 0 | grep TXDelay | awk '{print $8}')" -ne "$TNC_TXDELAY" ]; then
          echo -e "\nERROR: TNC-Pi not accepting new TX Delay value"
          echo -e "\nERROR: TNC-Pi not accepting new TX Delay value" >> $LOG
          exit 1
       fi
    fi
    # Check for a Persisteance of 64
-   if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep Persistance | awk '{print $3}'`" -ne "64" ]; then
+	if [ "$($TNC_GET $TNC_DEV 0 | grep Persistance | awk '{print $3}')" -ne "$TNC_PERSIST" ]; then
       echo -en "[Persistance] "
       echo -en "[Persistance] " >> $LOG
-      /usr/local/src/tnc-pi/parms/pitnc_setparams 1 0 2 64 > /dev/null
+      $TNC_SET $TNC_DEV 0 2 $TNC_PERSIST > /dev/null
       CHKERR
-      if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep Persistance | awk '{print $3}'`" -ne "64" ]; then
+		if [ "$($TNC_GET $TNC_DEV 0 | grep Persistance | awk '{print $3}')" -ne "$TNC_PERSIST" ]; then
          echo -e "\nERROR: TNC-Pi not accepting new Persistance value"
          echo -e "\nERROR: TNC-Pi not accepting new Persistance value" >> $LOG
          exit 1
       fi
    fi
    # Check for a Slot time of 100
-   if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep Slottime | awk '{print $6}'`" -ne "10" ]; then
+	if [ "$($TNC_GET $TNC_DEV 0 | grep Slottime | awk '{print $6}')" -ne "$TNC_SLOT" ]; then
       echo -en "[Slottime] "
       echo -en "[Slottime] " >> $LOG
-      /usr/local/src/tnc-pi/parms/pitnc_setparams 1 0 3 10 > /dev/null
+      $TNC_SET $TNC_DEV 0 3 $TNC_SLOT > /dev/null
       CHKERR
-      if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep Slottime | awk '{print $6}'`" -ne "10" ]; then
+		if [ "$($TNC_GET $TNC_DEV 0 | grep Slottime | awk '{print $6}')" -ne "$TNC_SLOT" ]; then
          echo -e "\nERROR: TNC-Pi not accepting new Slot Time value"
          echo -e "\nERROR: TNC-Pi not accepting new Slot Time value" >> $LOG
          exit 1
       fi
    fi
    # Check for a TX Tail of 0
-   if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep TXTail | awk '{print $3}'`" -ne "0" ]; then
+	if [ "$($TNC_GET $TNC_DEV 0 | grep TXTail | awk '{print $3}')" -ne "$TNC_TXTAIL" ]; then
       echo -e "[TXTail]"
       echo -e "[TXTail]"  >> $LOG
-      /usr/local/src/tnc-pi/parms/pitnc_setparams 1 0 4 0 > /dev/null
+      $TNC_SET $TNC_DEV 0 4 $TNC_TXTAIL > /dev/null
       CHKERR
-      if [ "`/usr/local/src/tnc-pi/parms/pitnc_getparams 1 0 | grep TXTail | awk '{print $3}'`" -ne "0" ]; then
+		if [ "$($TNC_GET $TNC_DEV 0 | grep TXTail | awk '{print $3}')" -ne "$TNC_TXTAIL" ]; then
          echo -e "\nERROR: TNC-Pi not accepting new TXTail value"
          echo -e "\nERROR: TNC-Pi not accepting new TXTail value" >> $LOG
          exit 1
       fi
    fi
+	# Make these TNC settings effective by rebooting the TNC
+	$TNC_SET $TNC_DEV 0 15 2 > /dev/null
+	$TNC_GET $TNC_DEV 0 >> $LOG
+	#sleep 5
 fi
 
 
@@ -221,7 +264,7 @@ if [ -n "`grep ^axudp /etc/ax25/axports`" ]; then
    #
    echo "Installing a KISS link on ethernet port"
    echo "Installing a KISS link on ethernet port" >> $LOG
-   $KISSATTACH $AXUDP axudp  > /tmp/ax25-config.tmp
+   $KISSATTACH $AXUDP axudp ${IPADDR%/*}  > /tmp/ax25-config.tmp
    CHKERR
    awk '/device/ { print $7 }' /tmp/ax25-config.tmp > /tmp/ax25-config0-tmp
    read Device < /tmp/ax25-config0-tmp
@@ -246,13 +289,13 @@ fi
 #
 
 if [ $TNCTYPE = "tncpi" ]; then
-   echo "Installing one KISS connexions on serial port ttyAMA0"
-   echo "Installing one KISS connexions on serial port ttyAMA0" >> $LOG
+   echo "Installing one KISS connexions on $TNC_DEV"
+   echo "Installing one KISS connexions on $TNC_DEV" >> $LOG
    # vhfdrop are ports names in /etc/ax25/axports
-   $MKISS -s 19200 -x 1 /dev/ttyAMA0 > /tmp/unix98
+   $MKISS -s 19200 -x 1 $TNC_DEV > /tmp/unix98
    CHKERR
    export PTS0=`more /tmp/unix98 | grep -w /dev | cut -b -11`
-   $KISSATTACH $PTS0 $AXINT  > /tmp/ax25-config.tmp
+   $KISSATTACH $PTS0 $AXINT ${IPADDR%/*} > /tmp/ax25-config.tmp
    CHKERR
    awk '/device/ { print $7 }' /tmp/ax25-config.tmp > /tmp/ax25-config1-tmp
    read Device < /tmp/ax25-config1-tmp
@@ -261,13 +304,28 @@ fi
 if [ $TNCTYPE = "direwolf" ]; then
    echo "TNC Type: direwolf"
    echo "TNC Type: direwolf" >> $LOG
-   echo "Restoring audio levels on soundcard"
-   echo "Restoring audio levels on soundcard" >> $LOG
-   alsactl restore
+   #echo "Restoring audio levels on soundcard"
+   #echo "Restoring audio levels on soundcard" >> $LOG
+   #alsactl restore
    echo "Starting direwolf"
    echo "Starting direwolf" >> $LOG
-   $DIREWOLF -t 0 -c $DIREWOLFCONF -p >> $LOG 2>&1 &
+   sudo su - $DWUSER -c "$DIREWOLF -t 0 -c $DIREWOLFCONF -p >> $LOG 2>&1 &"
    #Running CHKERR here won't work as direwolf starts in the background
+   COUNTER=0
+   MAXWAIT=15
+   while [ $COUNTER -lt $MAXWAIT ]
+   do
+     # Allocate a PTY to ax25
+     [ -L /tmp/kisstnc ] && break
+     sleep 1
+     let COUNTER=COUNTER+1
+   done
+   if [ $COUNTER -ge $MAXWAIT ]
+   then
+      echo -e "\nERROR: Direwolf did not allocate a PTY and is not running, please review $LOG"
+      echo -e "\nERROR: Direwolf did not allocate a PTY and is not running, please review $LOG" >> $LOG
+      exit 1
+   fi
    sleep 5
    if [ -z "`ps ax | grep -v grep | grep direwolf`" ]; then
       echo -e "\nERROR: Direwolf did not start properly and is not running, please review $LOG"
@@ -278,13 +336,13 @@ if [ $TNCTYPE = "direwolf" ]; then
    echo "Installing one KISS connection on PTY port /tmp/kisstnc" >> $LOG
    #The speed setting here doesn't matter much for Direwolf but keep it aligned
    # with the setting in /etc/ax25/axports
-   $MKISS -s 19200 -x 1 /tmp/kisstnc > /tmp/unix98
+   sudo su - $DWUSER -c "$MKISS -s 19200 -x 1 /tmp/kisstnc > /tmp/unix98"
    CHKERR
    #This creates a PTS interface like "/dev/pts/3"
    export PTS0=`more /tmp/unix98 | grep -w /dev | cut -b -11`
    echo "PTS0 device: $PTS0"
    echo "PTS0 device: $PTS0" >> $LOG
-   $KISSATTACH $PTS0 $AXINT  > /tmp/ax25-config.tmp
+   $KISSATTACH $PTS0 $AXINT ${IPADDR%/*} > /tmp/ax25-config.tmp
    CHKERR
    awk '/device/ { print $7 }' /tmp/ax25-config.tmp > /tmp/ax25-config1-tmp
    read Device < /tmp/ax25-config1-tmp
@@ -335,6 +393,8 @@ if [ $TNCTYPE != "d74" ]; then
       cd /proc/sys/net/ax25/$Device/
       #Device parameters
       $IP address add $IPADDR dev ax0
+		$IPTABLES -A OUTPUT -o ax0 -j DROP
+		$IP6TABLES -A OUTPUT -o ax0 -j DROP
      else echo "** Error setting $Device parms **"
    fi
 fi
@@ -366,4 +426,4 @@ cd /etc/ax25
 #echo "ax25-up.new2 disabled"
 echo "Preparing for ax25-up.new2 - sleep for 4 seconds"
 sleep 4
-/etc/ax25/ax25-up.new2 $TNCTYPE
+/etc/ax25/ax25-up.new2 $TNCTYPE $AXINT

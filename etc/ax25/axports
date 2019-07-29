@@ -34,4 +34,4 @@
 #
 # The format of this file is:
 #portname	callsign	speed	paclen	window	description
-wl2kgw	_CALL_-_SSID_	19200	236	4	TNC Setup on _FREQ_ Hz (1200 bps)
+wl2kgw	_CALL_-_SSID_	19200	236	4	TNC Setup on _FREQ_ Hz (_MODEM_)
