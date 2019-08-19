@@ -6,6 +6,13 @@ IMPORTANT: To install the RMS Gateway, run the __install-rmsgw.sh__ script that 
 
 The following is a summary of most of the steps that the __install-rmsgw.sh__ performs to install the RMS Gateway.  It is for documentation only - __USE THE SCRIPT TO INSTALL__!
 
+# Installation
+
+
+
+# Backup Documentation
+
+
 ## 1. Update package list
 	sudo apt-get update
 	sudo apt-get install build-essential autoconf libtool git psmisc net-tools
