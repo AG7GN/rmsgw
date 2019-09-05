@@ -12,9 +12,9 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.0.25"
+VERSION="1.0.26"
 
-CONFIG_FILE="$HOME/rmsgw/rmsgw.conf"
+CONFIG_FILE="$HOME/rmsgw.conf"
 
 trap errorReport INT ERR
 
@@ -187,7 +187,7 @@ done
 
 TEMPF="$(mktemp)"
 
-cd $HOME/rmsgw/
+cd /usr/local/share/hampi/rmsgw/
 
 FNAME="etc/rmsgw/channels.xml"
 sed "s|_CALL_|${F[_CALL_]}|g;s|_SSID_|${F[_SSID_]}|;s|_PASSWORD_|${F[_PASSWORD_]}|;s|_GRID_|${F[_GRID_]}|;s|_FREQ_|${F[_FREQ_]}|;s|_MODEM_|${F[_MODEM_]}|;s|_POWER_|${F[_POWER_]}|;s|_HEIGHT_|${F[_HEIGHT_]}|;s|_GAIN_|${F[_GAIN_]}|;s|_DIR_|${F[_DIR_]}|;s|_HOURS_|${F[_HOURS_]}|;s|_SERVICE_|${F[_SERVICE_]}|" "$FNAME" > "$TEMPF" 

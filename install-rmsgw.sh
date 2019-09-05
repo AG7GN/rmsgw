@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version 1.0.18
+# Version 1.0.19
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -19,7 +19,7 @@ function aptError () {
 }
 
 sudo apt-get update || aptError "sudo apt-get update"
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential autoconf libtool git psmisc net-tools zlib1g zlib1g-dev libncurses5-dev libncursesw5-dev xutils-dev libxml2 libxml2-dev python-requests mariadb-client libmariadbclient-dev texinfo libasound2-dev unzip extra-xdg-menus gpsd libgps-dev yad iptables-persistent libhamlib2 libhamlib-dev || aptError "sudo apt=get -y install <various  packages>"
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential autoconf libtool git psmisc net-tools zlib1g zlib1g-dev libncurses5-dev libncursesw5-dev xutils-dev libxml2 libxml2-dev python-requests mariadb-client libmariadbclient-dev texinfo libasound2-dev unzip extra-xdg-menus gpsd libgps-dev yad iptables-persistent libhamlib2 libhamlib-dev || aptError "sudo apt-get -y install <various packages>"
 
 ## Remove multicast advertising protocol
 #echo "Remove avahi-daemon and libnss-mdns"
@@ -108,13 +108,19 @@ else
    echo >&2 "WARNING: Could not download pitnc software."
 fi
 
+echo "Get hampi-iptables from github.com/AG7GN/iptables"
+rm -rf hampi-iptables/
+git clone https://github.com/AG7GN/hampi-iptables
+[[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting installation."; exit 1; }
+echo "Done."
+
 echo "Make 'Configure RMS Gateway' menu item for the 'Ham Radio' menu"
 cat > $HOME/.local/share/applications/configure-rmsgw.desktop << EOF
 [Desktop Entry]
 Name=Configure RMS Gateway
 GenericName=Configure RMS Gateway
 Comment=Configure RMS Gateway and supporting apps
-Exec=lxterminal --geometry=90x30 -t "Configure RMS Gateway" -e "$HOME/rmsgw/configure-rmsgw.sh"
+Exec=lxterminal --geometry=90x30 -t "Configure RMS Gateway" -e "/usr/local/share/hampi/rmsgw/configure-rmsgw.sh"
 Icon=/usr/share/raspberrypi-artwork/raspitr.png
 Terminal=false
 Type=Application
@@ -130,7 +136,7 @@ sudo cp -f etc/ax25/ax25-down /etc/ax25/
 sudo cp -f etc/logrotate.d/* /etc/logrotate.d/
 sudo cp -f /etc/iptables/rules.v4 /etc/iptables/rules.v4.previous
 sudo cp -f /etc/iptables/rules.v6 /etc/iptables/rules.v6.previous
-sudo cp -f etc/iptables/rules* /etc/iptables/
+sudo cp -f hampi-iptables/rules* /etc/iptables/
 sudo chown root:root /etc/iptables/rules*
 echo "Done."
 

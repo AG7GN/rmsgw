@@ -1,5 +1,7 @@
 # Building an RMS Gateway on Raspberry Pi running Debian 10 (Buster)
 
+VERSION 20190904
+
 IMPORTANT: You must obtain a [Sysop Winlink account](https://www.winlink.org/content/join_gateway_sysop_team_sysop_guidelines) in order to operate an RMS Gateway.
 
 IMPORTANT: To install the RMS Gateway, run the __install-rmsgw.sh__ script that is part of this package.  Once that is installed, run the __configure-rmsgw.sh__ script to configure and start the RMS Gateway.
