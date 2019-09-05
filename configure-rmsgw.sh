@@ -209,13 +209,14 @@ sed "s|_CALL_|${F[_CALL_]}|g;s|_PASSWORD_|${F[_PASSWORD_]}|;s|_GRID_|${F[_GRID_]
 sudo cp -f "$TEMPF" "/$FNAME"
 
 FNAME="etc/ax25/axports"
+sed -i '/^[[:space:]]*$/d' $FNAME
 sed "s|_CALL_|${F[_CALL_]}|g;s|_SSID_|${F[_SSID_]}|g;s|_FREQ_|${F[_FREQ_]}|g;s|_MODEM_|${F[_MODEM_]}|g" "$FNAME" > "$TEMPF"
 [[ $? == 0 ]] || errorReport "ERROR updating $FNAME" 1
 # Check for a client wl2k line and save it if found
-if [[ -f /$FNAME ]]
+if [ -f /$FNAME ]
 then
-   SAVE="$(sudo grep "^wl2k[[:space:]]" /$FNAME)"
-   [[ $SAVE =~ wl2k ]] && echo "$SAVE" >> "$TEMPF"
+	SAVE="$(grep "^wl2k[[:space:]]" /$FNAME || [[ $? == 1 ]] 2>&1)"
+	[[ $SAVE =~ wl2k ]] && echo -e "\n$SAVE" >> "$TEMPF"
 fi
 sudo cp -f "$TEMPF" "/$FNAME"
 sudo chmod ugo+r "/$FNAME"
