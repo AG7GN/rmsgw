@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version 1.0.19
+# Version 1.0.20
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -127,6 +127,7 @@ Type=Application
 Categories=HamRadio;
 Comment[en_US]=Configure RMS Gateway
 EOF
+sudo mv -f $HOME/.local/share/applications/configure-rmsgw.desktop /usr/local/share/applications/
 echo "Done."
 
 echo "Installing scripts, firewall rules and logrotate files."
