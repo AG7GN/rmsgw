@@ -12,7 +12,7 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.0.28"
+VERSION="1.0.29"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
 
