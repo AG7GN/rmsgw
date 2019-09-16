@@ -12,7 +12,7 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.0.29"
+VERSION="1.0.30"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
 
@@ -151,7 +151,7 @@ See http://www.aprs.net/vm/DOS/PROTOCOL.HTM for power, height, gain, dir and bea
 
 IFS='|' read -r -a TF <<< "$ANS"
 
-F[_CALL_]="${TF[0]}"
+F[_CALL_]="${TF[0]^^}"
 F[_SSID_]="${TF[1]}"
 F[_PASSWORD_]="${TF[2]}"
 F[_SYSOP_]="${TF[3]}"
