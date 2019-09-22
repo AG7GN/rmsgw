@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.1.2"
+VERSION="1.1.3"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -127,7 +127,7 @@ Terminal=false
 Type=Application
 Categories=HamRadio;
 Comment[en_US]=Configure RMS Gateway
-NoDisplay=true
+#NoDisplay=true
 EOF
 sudo mv -f $HOME/.local/share/applications/configure-rmsgw.desktop /usr/local/share/applications/
 echo "Done."
@@ -149,14 +149,6 @@ echo "Installation complete."
 echo
 echo "Select 'Configure RMS Gateway' from the Ham Radio Raspberry"
 echo "Pi menu to configure and activate the RMS Gateway."
-echo
-echo "You might have to edit the Raspberry Pi menus to make the Ham Radio menu visible."
-echo "Click Raspberry > Preferences > Main Menu Editor, then select 'Hamradio' in the"
-echo "left pane.  Check/uncheck menu items as desired in the middle pane."
-echo
-echo "CAUTION: NEVER click \"Cancel\" in the Main Menu editor!  Doing so will revert the"
-echo "menus to the default configuration without warning."  
-echo
 echo
 
 
