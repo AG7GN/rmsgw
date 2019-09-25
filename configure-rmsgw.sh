@@ -12,7 +12,7 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.0.32"
+VERSION="1.0.34"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
 
@@ -45,7 +45,7 @@ else # Set some default values in a new config file
    echo "F[_CITY_]='Anytown'" >> "$CONFIG_FILE"
    echo "F[_STATE_]='WA'" >> "$CONFIG_FILE"
    echo "F[_ZIP_]='98225'" >> "$CONFIG_FILE"
-   echo "F[_BEACON_]='!4850.00N/12232.27W\$144.920MHzMy RMS Gateway'" >> "$CONFIG_FILE"
+   echo "F[_BEACON_]='!4850.00N/12232.27W]144.920MHzMy RMS Gateway'" >> "$CONFIG_FILE"
    echo "F[_EMAIL_]='n0one@example.com'" >> "$CONFIG_FILE"
    echo "F[_FREQ_]='144920000'" >> "$CONFIG_FILE"
    echo "F[_POWER_]='3'" >> "$CONFIG_FILE"
@@ -187,7 +187,7 @@ done
 
 TEMPF="$(mktemp)"
 
-cd /usr/local/share/hampi/rmsgw/
+cd /usr/local/src/hampi/rmsgw/
 
 FNAME="etc/rmsgw/channels.xml"
 sed "s|_CALL_|${F[_CALL_]}|g;s|_SSID_|${F[_SSID_]}|;s|_PASSWORD_|${F[_PASSWORD_]}|;s|_GRID_|${F[_GRID_]}|;s|_FREQ_|${F[_FREQ_]}|;s|_MODEM_|${F[_MODEM_]}|;s|_POWER_|${F[_POWER_]}|;s|_HEIGHT_|${F[_HEIGHT_]}|;s|_GAIN_|${F[_GAIN_]}|;s|_DIR_|${F[_DIR_]}|;s|_HOURS_|${F[_HOURS_]}|;s|_SERVICE_|${F[_SERVICE_]}|" "$FNAME" > "$TEMPF" 

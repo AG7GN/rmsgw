@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.1.4"
+VERSION="1.1.5"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -96,6 +96,7 @@ make && sudo make install
 [[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting installation."; exit 1; }
 cd ..
 sudo chown rmsgw /etc/rmsgw/gateway.conf
+sudo chown rmsgw /etc/rmsgw/*.xml
 
 echo "Get the pitnc_setparams and pitnc_getparams software"
 wget -q -O pitnc9K6params.zip http://www.tnc-x.com/pitnc9K6params.zip
