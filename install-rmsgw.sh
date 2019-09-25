@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.1.3"
+VERSION="1.1.4"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -121,7 +121,7 @@ cat > $HOME/.local/share/applications/configure-rmsgw.desktop << EOF
 Name=Configure RMS Gateway
 GenericName=Configure RMS Gateway
 Comment=Configure RMS Gateway and supporting apps
-Exec=lxterminal --geometry=90x30 -t "Configure RMS Gateway" -e "/usr/local/share/hampi/rmsgw/configure-rmsgw.sh"
+Exec=lxterminal --geometry=90x30 -t "Configure RMS Gateway" -e "/usr/local/src/hampi/rmsgw/configure-rmsgw.sh"
 Icon=/usr/share/raspberrypi-artwork/raspitr.png
 Terminal=false
 Type=Application
