@@ -6,15 +6,15 @@
 # 1 0 * * *   /home/pi/rmsgw-activity.sh 2>&1 >/dev/null
 
 
-VERSION="1.1.3"
+VERSION="1.1.4"
 
 declare -i AGE=24 # Age in hours
-FILES="/var/log/rms* /var/log/syslog"
+FILES="/var/log/rms* /var/log/syslog*"
 # Mail VNC Server login activity for last 24 hours.
 MAILTO="${1:-w7ecg.wecg@gmail.com}"
 FILTERED="$(mktemp)"
 OUTFILE="$(mktemp)"
-bzgrep -h " rmsgw.*Login \|Logout " $FILES 2>/dev/null 1>$FILTERED
+bzgrep -h " rmsgw.*Login \| rmsgw.*Logout " $FILES 2>/dev/null 1>$FILTERED
 NOW="$(date +'%s')"
 if [ -s $FILTERED ]
 then
