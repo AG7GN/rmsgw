@@ -6,7 +6,7 @@
 # 1 0 * * *   /home/pi/rmsgw-activity.sh 2>&1 >/dev/null
 
 
-VERSION="1.1.2"
+VERSION="1.1.3"
 
 declare -i AGE=24 # Age in hours
 FILES="/var/log/rms* /var/log/syslog"
@@ -14,7 +14,7 @@ FILES="/var/log/rms* /var/log/syslog"
 MAILTO="${1:-w7ecg.wecg@gmail.com}"
 FILTERED="$(mktemp)"
 OUTFILE="$(mktemp)"
-bzgrep -ih " rmsgw.*login \|logout " $FILES 2>/dev/null 1>$FILTERED
+bzgrep -h " rmsgw.*Login \|Logout " $FILES 2>/dev/null 1>$FILTERED
 NOW="$(date +'%s')"
 if [ -s $FILTERED ]
 then
