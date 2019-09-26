@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.1.5"
+VERSION="1.1.6"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -142,6 +142,7 @@ sudo cp -f /etc/iptables/rules.v4 /etc/iptables/rules.v4.previous
 sudo cp -f /etc/iptables/rules.v6 /etc/iptables/rules.v6.previous
 sudo cp -f hampi-iptables/rules* /etc/iptables/
 sudo chown root:root /etc/iptables/rules*
+sudo cp -f rmsgw-activity.sh /usr/local/bin/
 echo "Done."
 
 echo
