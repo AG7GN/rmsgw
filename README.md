@@ -27,7 +27,7 @@ The following is a summary of most of the steps that the __install-rmsgw.sh__ pe
 
 ## 2. Install the VE7FET AX.25 packages
 
-The Debian packages below were built for Raspberry Pi Stretch using David Ranch's (KI6ZHD) excellent [instructions](http://www.trinityos.com/HAM/CentosDigitalModes/RPi/rpi2-setup.html#18.install-ax25).
+The Debian packages below were built for Raspberry Pi Buster using David Ranch's (KI6ZHD) excellent [instructions](http://www.trinityos.com/HAM/CentosDigitalModes/RPi/rpi2-setup.html#18.install-ax25).
 
 ### 2.1 libax25
 #### 2.1.1 Prerequisites
