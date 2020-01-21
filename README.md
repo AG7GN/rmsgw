@@ -1,6 +1,6 @@
 # Building an RMS Gateway on Raspberry Pi running Debian 10 (Buster)
 
-VERSION 20190922
+VERSION 20200121
 
 IMPORTANT: You must obtain a [Sysop Winlink account](https://www.winlink.org/content/join_gateway_sysop_team_sysop_guidelines) in order to operate an RMS Gateway.
 
@@ -223,7 +223,7 @@ Change __GWCALL__ and __GRIDSQUARE__ as needed.
 	
 ### 5.2 Install
 	cd ~
-	sudo dpkg --install direwolf_1.5-1_armhf.deb
+	sudo dpkg --install direwolf_1.6C-1_armhf.deb
 	sudo cp /usr/share/doc/direwolf/examples/direwolf.conf /etc/ax25/
 	
 NOTE:  There's lots of good information about Direwolf, it's configuration and operation in the `/usr/share/doc/direwolf/examples` folder.
@@ -263,6 +263,27 @@ Sudo edit /etc/ax25/direwolf.conf and change __MYCALL__:
 	ARATE 48000
 	MODEM 1200
 	MYCALL N0ONE
+
+## 6. Install RMS Gateway Monitor script
+
+### 6.1 Prerequisites
+	sudo apt install yad extra-xdg-menus
+
+### 6.2 Install
+Create the `/usr/local/share/applications/rmsgw_monitor.desktop` file with this text:
+	[Desktop Entry]
+	Name=RMS Gateway Monitor
+	GenericName=RMS Gateway Monitor
+	Comment=RMS Gateway Monitor
+	Exec=bash -c /usr/local/bin/rmsgw_monitor.sh
+	Icon=/usr/share/raspberrypi-artwork/raspitr.png
+	Terminal=false
+	Type=Application
+	Categories=HamRadio;
+	Comment[en_US]=RMS Gateway Monitor
+
+Install the `rmsgw_monitor.sh` script in `/usr/local/bin/`:
+	sudo cp usr/local/bin/rmsgw_monitor.sh /usr/local/bin/
 
 
 

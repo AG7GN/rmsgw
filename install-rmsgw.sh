@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.1.6"
+VERSION="1.2.2"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -71,7 +71,7 @@ sudo ldconfig
 #echo "Done."
 
 echo "Install Direwolf"
-if ! which direwolf >/dev/null
+if ! command -v direwolf >/dev/null
 then
    sudo dpkg --install direwolf_1.6C-1_armhf.deb
    [[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting installation."; exit 1; }
@@ -81,7 +81,7 @@ else
    echo "Direwolf already installed"
 fi
 
-echo "Get the latest rmsgw software using git"
+echo "Retrieve the latest rmsgw software"
 sudo mkdir -p /etc/rmsgw
 [ -d /usr/local/etc/rmsgw ] && sudo rm -rf /usr/local/etc/rmsgw
 sudo ln -s /etc/rmsgw /usr/local/etc/rmsgw 
@@ -117,7 +117,7 @@ git clone https://github.com/AG7GN/hampi-iptables
 echo "Done."
 
 echo "Make 'Configure RMS Gateway' menu item for the 'Ham Radio' menu"
-cat > $HOME/.local/share/applications/configure-rmsgw.desktop << EOF
+cat > /tmp/configure-rmsgw.desktop << EOF
 [Desktop Entry]
 Name=Configure RMS Gateway
 GenericName=Configure RMS Gateway
@@ -130,11 +130,28 @@ Categories=HamRadio;
 Comment[en_US]=Configure RMS Gateway
 #NoDisplay=true
 EOF
-sudo mv -f $HOME/.local/share/applications/configure-rmsgw.desktop /usr/local/share/applications/
+sudo mv -f /tmp/configure-rmsgw.desktop /usr/local/share/applications/
+
+echo "Make 'RMS Gateway Monitor' menu item for the 'Ham Radio' menu"
+cat > /tmp/rmsgw_monitor.desktop << EOF
+[Desktop Entry]
+Name=RMS Gateway Monitor
+GenericName=RMS Gateway Monitor
+Comment=RMS Gateway Monitor
+Exec=bash -c /usr/local/bin/rmsgw_monitor.sh
+Icon=/usr/share/raspberrypi-artwork/raspitr.png
+Terminal=false
+Type=Application
+Categories=HamRadio;
+Comment[en_US]=RMS Gateway Monitor
+EOF
+sudo mv -f /tmp/rmsgw_monitor.desktop /usr/local/share/applications/
+
 echo "Done."
 
 echo "Installing scripts, firewall rules and logrotate files."
 sudo cp -f usr/local/bin/rmschanstat.local /usr/local/bin/
+sudo cp -f usr/local/bin/rmsgw_monitor.sh /usr/local/bin/
 chmod +x etc/ax25/ax25-down
 sudo cp -f etc/ax25/ax25-down /etc/ax25/
 sudo cp -f etc/logrotate.d/* /etc/logrotate.d/
@@ -152,5 +169,7 @@ echo
 echo "Select 'Configure RMS Gateway' from the Ham Radio Raspberry"
 echo "Pi menu to configure and activate the RMS Gateway."
 echo
-
+echo "Select 'RMS Gateway Monitor' to monitor the relevant log files"
+echo "and to start/stop the RMS Gateway service (ax25.service)."
+echo
 
