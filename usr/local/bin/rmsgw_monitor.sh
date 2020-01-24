@@ -3,7 +3,7 @@
 # Script to tail RMS Gateway log files and provide easy way
 # to start and stop ax25.service. 
 
-VERSION="1.0.4"
+VERSION="1.0.5"
 
 #LOGFILES=${1:-/var/log/syslog}
 LOGFILES="/var/log/ax25-listen.log /var/log/packet.log /var/log/rms.debug"
@@ -47,7 +47,7 @@ function CheckDaemon () {
 				;;
 		esac			
 	else # ax25.service not installed/enabled
-		STATUS="<b><big><span color='red'>RMS Gateway is NOT installed/enabled.</span></big>\n\n<i>Operating an RMS Gateway requires that you obtain a 'Sysop' account at winlink.org!</i></b>\n\nThere are other requirements as well.\n\nIf you operate the Pi as an RMS Gateway, I strongly recommend that you don't use the Pi for any other purpose.\n\n If you still want to operate an RMS Gateway, run 'Configure RMS Gateway' in the Hamradio menu to install and configure it.\n" 
+		STATUS="<b><big><span color='red'>RMS Gateway is NOT enabled.</span></big>\n\n<i>Operating an RMS Gateway requires that you obtain a 'Sysop' account at winlink.org!</i></b>\n\nThere are other requirements as well.\n\nIf you operate the Pi as an RMS Gateway, I strongly recommend that you don't use the Pi for any other purpose.\n\n If you still want to operate an RMS Gateway, run 'Configure RMS Gateway' in the Hamradio menu to enable and configure it.\n" 
 	   echo "$STATUS" | yad --center --title="$TITLE" --skip-taskbar --borders=20 \
 			--form --align center --field="$STATUS":RO "*** IMPORTANT ***" \
 			--width=300 --height=200 --selectable-labels \
