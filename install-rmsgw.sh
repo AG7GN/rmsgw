@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.2.2"
+VERSION="1.2.3"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
