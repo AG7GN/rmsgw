@@ -3,7 +3,7 @@
 # Script to tail RMS Gateway log files and provide easy way
 # to start and stop ax25.service. 
 
-VERSION="1.0.5"
+VERSION="1.0.6"
 
 #LOGFILES=${1:-/var/log/syslog}
 LOGFILES="/var/log/ax25-listen.log /var/log/packet.log /var/log/rms.debug"
@@ -64,7 +64,7 @@ yad --text-info --back=black --fore=yellow --width=800 --height=400 \
 	--tail --center --button="<b>Quit</b>":0 --button="<b>Start/Stop RMS Gateway</b>":"bash -c CheckDaemon" \
 	--buttons-layout=center <&3 &
 YPID=$!
-tail -F --pid=$YPID -q -n 30 $LOGFILES >&3
+tail -F --pid=$YPID -q -n 30 $LOGFILES 2>/dev/null | cat -v >&3
 
 
 
