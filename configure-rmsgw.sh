@@ -12,7 +12,7 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.0.34"
+VERSION="1.0.35"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
 
@@ -296,6 +296,9 @@ EOF
    sudo systemctl start ax25 || errorReport "ERROR: ax25 failed to start" 1
    echo "Done."
 fi
+
+# Set permissions
+sudo chown -R rmsgw:rmsgw /etc/rmsgw/*
 
 echo "Installing crontab for user rmsgw"
 WHO="rmsgw"

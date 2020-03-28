@@ -97,7 +97,7 @@ make && sudo make install
 cd ..
 #sudo chown rmsgw /etc/rmsgw/gateway.conf
 #sudo chown rmsgw /etc/rmsgw/*.xml
-sudo chown -R rmsgw /etc/rmsgw/*
+sudo chown -R rmsgw:rmsgw /etc/rmsgw/*
 
 echo "Get the pitnc_setparams and pitnc_getparams software"
 wget -q -O pitnc9K6params.zip http://www.tnc-x.com/pitnc9K6params.zip
