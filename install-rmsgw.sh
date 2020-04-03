@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.2.4"
+VERSION="1.2.5"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -156,6 +156,8 @@ sudo cp -f usr/local/bin/rmsgw_monitor.sh /usr/local/bin/
 chmod +x etc/ax25/ax25-down
 sudo cp -f etc/ax25/ax25-down /etc/ax25/
 sudo cp -f etc/logrotate.d/* /etc/logrotate.d/
+sudo cp -f etc/rsyslog.d/* /etc/rsyslog.d/
+sudo systemctl restart rsyslog
 sudo cp -f /etc/iptables/rules.v4 /etc/iptables/rules.v4.previous
 sudo cp -f /etc/iptables/rules.v6 /etc/iptables/rules.v6.previous
 sudo cp -f hampi-iptables/rules* /etc/iptables/
