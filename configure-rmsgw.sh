@@ -12,7 +12,7 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.0.35"
+VERSION="1.1.7"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
 
@@ -62,7 +62,14 @@ else # Set some default values in a new config file
    echo "F[_PTT_]='GPIO 23'" >> "$CONFIG_FILE"
    echo "F[_DWUSER_]='$(whoami)'" >> "$CONFIG_FILE"
    echo "F[_BANNER_]='*** My Banner ***'" >> "$CONFIG_FILE"
+   echo "F[_REPORTS_]='FALSE'" >> "$CONFIG_FILE"
 	source "$CONFIG_FILE"
+fi
+
+if ! [[ -n "${F[_REPORTS_]}" ]]
+then
+	F[_REPORTS_]='FALSE'
+	echo "F[_REPORTS_]='FALSE'" >> "$CONFIG_FILE"
 fi
 
 echo "Loading configuration GUI."
@@ -126,7 +133,7 @@ See http://www.aprs.net/vm/DOS/PROTOCOL.HTM for power, height, gain, dir and bea
   --field="State" "${F[_STATE_]}" \
   --field="ZIP" "${F[_ZIP_]}" \
   --field="Beacon message" "${F[_BEACON_]}" \
-  --field="Email" "${F[_EMAIL_]}" \
+  --field="Sysop Email" "${F[_EMAIL_]}" \
   --field="Frequency (Hz)" "${F[_FREQ_]}" \
   --field="Power SQR(P)":NUM "${F[_POWER_]}!0..9!1!" \
   --field="Antenna Height LOG2(H/10)":NUM "${F[_HEIGHT_]}!0..9!1!" \
@@ -142,6 +149,7 @@ See http://www.aprs.net/vm/DOS/PROTOCOL.HTM for power, height, gain, dir and bea
   --field="Direwolf PTT":CBE "$PTTs" \
   --field="Direwolf User" "${F[_DWUSER_]}" \
   --field="Banner Text (keep it short!)" "${F[_BANNER_]}" \
+  --field="Send daily activity reports to Sysop email address":CHK "${F[_REPORTS_]}" \
   --focus-field 1 \
    )"
 
@@ -178,6 +186,7 @@ F[_ARATE_]="${TF[23]}"
 F[_PTT_]="${TF[24]}"
 F[_DWUSER_]="${TF[25]}"
 F[_BANNER_]="$(echo "${TF[26]}" | sed "s/'//g")" # Strip out single quotes
+F[_REPORTS_]="${TF[27]}"
 
 echo "declare -A F" > "$CONFIG_FILE"
 for I in "${!F[@]}"
@@ -186,6 +195,49 @@ do
 done
 
 TEMPF="$(mktemp)"
+
+WHO="$USER"
+SCRIPT="$(command -v rmsgw-activity.sh)"
+PAT="$(command -v pat) --send-only --event-log /dev/null connect telnet"
+if [[ ${F[_REPORTS_]} == "TRUE" ]]
+then
+	if [[ ${F[_EMAIL_]} =~ ^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:].]{2,4}$ ]]
+	then
+		if command -v hamapps.sh >/dev/null 2>&1
+		then
+			if $(command -v hamapps.sh) install pat 
+			then  
+				# Configure call and password in pat
+				if [ -f $HOME/.wl2k/config.json ]
+				then
+					sed -i -e "s/\"mycall\": .*\",$/\"mycall\": \"${F[_CALL_]}\",/" \
+							-e "s/\"secure_login_password\": .*\",$/\"secure_login_password\": \"${F[_PASSWORD_]}\",/" \
+							-e "s/\"locator\": .*\",$/\"locator\": \"${F[_GRID_]}\",/" $HOME/.wl2k/config.json
+				fi
+				echo "Installing cron job for report generation for user $WHO"
+				WHEN="1 0 * * *"
+				WHAT="$SCRIPT ${F[_EMAIL_]} >/dev/null 2>&1"
+				JOB="$WHEN $WHAT"
+				cat <(fgrep -i -v "$SCRIPT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
+				WHEN="3 * * * *"
+				WHAT="$PAT >/dev/null 2>&1"
+				JOB="$WHEN $WHAT"
+				cat <(fgrep -i -v "$PAT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
+				echo "Done."
+			else
+				echo >&2 "Error installing pat.  Reporting disabled."
+			fi
+		else
+			echo >&2 "hamapps.sh is not found but is needed to install pat to email reports.  Reporting will not be enabled."
+		fi
+	else
+		echo >&2 "Invalid or missing Sysop email address.  Reporting will not be enabled."
+	fi
+else # Remove report cron job if present
+	echo "Remove Reporting"
+	cat <(fgrep -i -v "$SCRIPT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
+	cat <(fgrep -i -v "$PAT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
+fi
 
 cd /usr/local/src/hampi/rmsgw/
 
