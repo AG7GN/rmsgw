@@ -3,7 +3,7 @@
 # Script to tail RMS Gateway log files and provide easy way
 # to start and stop ax25.service. 
 
-VERSION="1.0.7"
+VERSION="1.0.8"
 
 #LOGFILES=${1:-/var/log/syslog}
 LOGFILES="/var/log/ax25-listen.log /var/log/packet.log /var/log/rms.debug"
@@ -59,7 +59,7 @@ export -f CheckDaemon
 
 trap OnExit EXIT
 
-yad --text-info --editbale --margins=5 --show-uri --back=black --fore=yellow --width=800 --height=400 \
+yad --text-info --editable --margins=5 --show-uri --back=black --fore=yellow --width=800 --height=400 \
 	--title="Log Viewer $VERSION - Following $LOGFILES" --window-icon=logviewer \
 	--tail --center --button="<b>Quit</b>":0 --button="<b>Start/Stop RMS Gateway</b>":"bash -c CheckDaemon" \
 	--buttons-layout=center <&3 &

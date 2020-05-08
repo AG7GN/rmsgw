@@ -12,7 +12,7 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.1.7"
+VERSION="1.1.8"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
 
@@ -124,7 +124,7 @@ See http://www.aprs.net/vm/DOS/PROTOCOL.HTM for power, height, gain, dir and bea
   --form \
   --field="Call Sign" "${F[_CALL_]}" \
   --field="SSID":NUM "${F[_SSID_]}!1..15!1!" \
-  --field="Winlink Password" "${F[_PASSWORD_]}" \
+  --field="Winlink Password":H "${F[_PASSWORD_]}" \
   --field="Sysop Name" "${F[_SYSOP_]}" \
   --field="Grid Square" "${F[_GRID_]}" \
   --field="Street Address1" "${F[_ADDR1_]}" \
