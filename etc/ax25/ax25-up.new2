@@ -11,7 +11,7 @@
 # 08/30/17 - changed the path for beacon, ax25d, mheardd, 
 #          - Added logic to check for the rc.netrom file
 # 05/11/15 - log variable use
-
+# 07/29/2020 - Steve Magnuson: If BEACON="", don't start the beacon.
 
 # This script can start up optional advanced packet tools.  Most options
 # are disabled by default.  You will need to properly configure those
@@ -113,7 +113,7 @@ if [ -f /root/LinPac/macro/init.mac ]; then
 fi
 
 # Start beacon
-if test -x /usr/sbin/beacon
+if test -x /usr/sbin/beacon && [[ $BEACON != "" ]]
 then
    /usr/sbin/beacon $2 "$BEACON"
    echo $! > /var/run/beacon.pid

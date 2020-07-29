@@ -12,7 +12,7 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.1.8"
+VERSION="1.1.10"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
 
@@ -132,7 +132,7 @@ See http://www.aprs.net/vm/DOS/PROTOCOL.HTM for power, height, gain, dir and bea
   --field="City" "${F[_CITY_]}" \
   --field="State" "${F[_STATE_]}" \
   --field="ZIP" "${F[_ZIP_]}" \
-  --field="Beacon message" "${F[_BEACON_]}" \
+  --field="Beacon message\n(Empty disables beacon)" "${F[_BEACON_]}" \
   --field="Sysop Email" "${F[_EMAIL_]}" \
   --field="Frequency (Hz)" "${F[_FREQ_]}" \
   --field="Power SQR(P)":NUM "${F[_POWER_]}!0..9!1!" \
@@ -352,9 +352,16 @@ fi
 # Set permissions
 sudo chown -R rmsgw:rmsgw /etc/rmsgw/*
 
+# Generate 2 numbers between 1 and 59, M minutes apart to use for the cron job
+M=30
+N1=$(( $RANDOM % 59 + 1 ))
+N2=$(( $N1 + $M ))
+(( $N2 > 59 )) && N2=$(( $N2 - 60 ))
+INTERVAL="$(echo "$N1 $N2" | xargs -n1 | sort -g | xargs | tr ' ' ',')"
+
 echo "Installing crontab for user rmsgw"
 WHO="rmsgw"
-WHEN="17,47 * * * *"
+WHEN="$INTERVAL * * * *"
 WHAT="/usr/local/bin/rmsgw_aci >/dev/null 2>&1"
 JOB="$WHEN $WHAT"
 cat <(fgrep -i -v "$WHAT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
