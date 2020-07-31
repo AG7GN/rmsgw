@@ -12,9 +12,10 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.1.10"
+VERSION="1.1.11"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
+PAT_DIR="$HOME/.wl2kgw"
 
 trap errorReport INT ERR
 
@@ -188,56 +189,64 @@ F[_DWUSER_]="${TF[25]}"
 F[_BANNER_]="$(echo "${TF[26]}" | sed "s/'//g")" # Strip out single quotes
 F[_REPORTS_]="${TF[27]}"
 
+TEMPF="$(mktemp)"
+
+WHO="$USER"
+SCRIPT="$(command -v rmsgw-activity.sh)"
+PAT="$(command -v pat) --config $PAT_DIR/config.json --mbox $PAT_DIR/mailbox --send-only --event-log /dev/null connect telnet"
+# remove old style pat cron job, which used the default config.json pat configuration
+OLDPAT="$(command -v pat) --send-only --event-log /dev/null connect telnet"
+cat <(fgrep -i -v "$OLDPAT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
+if [[ ${F[_REPORTS_]} == "TRUE" ]]
+then # Daily email reports requested
+	if [[ ${F[_EMAIL_]} =~ ^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:].]{2,4}$ ]]
+	then # user has supplied a well-formed email address for SYSOP
+		if command -v pat >/dev/null 2>&1
+		then
+			# Check for pat's config file, config.json.  Create it if missing or corrupted.
+			RESULT="$(jq . $PAT_DIR/config.json 2>/dev/null)"
+			if [[ $RESULT == "" ]]
+			then # config.json missing or corrupted.  Make a new one.
+				[[ -f $PAT_DIR/config.json ]] && rm -f $PAT_DIR/config.json
+				cd $HOME
+				export EDITOR=ed
+				echo -n "" | pat --config $PAT_DIR/config.json configure >/dev/null 2>&1
+			fi
+ 			cat $PAT_DIR/config.json | jq \
+				--arg C "${F[_CALL_]}" \
+				--arg P "${F[_PASSWORD_]}" \
+				--arg L "${F[_GRID_]}" \
+					'.mycall = $C | .secure_login_password = $P | .locator = $L' | sponge $PAT_DIR/config.json
+			echo "Installing cron job for report generation and email for user $WHO"
+			WHEN="1 0 * * *"
+			WHAT="$SCRIPT ${F[_EMAIL_]} $PAT_DIR >/dev/null 2>&1"
+			JOB="$WHEN $WHAT"
+			cat <(fgrep -i -v "$SCRIPT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
+			WHEN="3 * * * *"
+			WHAT="$PAT >/dev/null 2>&1"
+			JOB="$WHEN $WHAT"
+			cat <(fgrep -i -v "$PAT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
+			echo "Done."
+		else
+			echo >&2 "pat not found but is needed to email reports. Reporting will not be enabled."
+			F[_REPORTS_]=FALSE
+		fi
+	else
+		echo >&2 "Invalid or missing Sysop email address.  Reporting will not be enabled."
+		F[_REPORTS_]=FALSE
+	fi
+else # Reporting disabled. Remove report cron job if present
+	echo "Remove Reporting"
+	cat <(fgrep -i -v "$SCRIPT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
+	cat <(fgrep -i -v "$PAT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
+fi
+
+# Update the configuration file
 echo "declare -A F" > "$CONFIG_FILE"
 for I in "${!F[@]}"
 do
 	echo "F[$I]='${F[$I]}'" >> "$CONFIG_FILE"
 done
-
-TEMPF="$(mktemp)"
-
-WHO="$USER"
-SCRIPT="$(command -v rmsgw-activity.sh)"
-PAT="$(command -v pat) --send-only --event-log /dev/null connect telnet"
-if [[ ${F[_REPORTS_]} == "TRUE" ]]
-then
-	if [[ ${F[_EMAIL_]} =~ ^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:].]{2,4}$ ]]
-	then
-		if command -v hamapps.sh >/dev/null 2>&1
-		then
-			if $(command -v hamapps.sh) install pat 
-			then  
-				# Configure call and password in pat
-				if [ -f $HOME/.wl2k/config.json ]
-				then
-					sed -i -e "s/\"mycall\": .*\",$/\"mycall\": \"${F[_CALL_]}\",/" \
-							-e "s/\"secure_login_password\": .*\",$/\"secure_login_password\": \"${F[_PASSWORD_]}\",/" \
-							-e "s/\"locator\": .*\",$/\"locator\": \"${F[_GRID_]}\",/" $HOME/.wl2k/config.json
-				fi
-				echo "Installing cron job for report generation for user $WHO"
-				WHEN="1 0 * * *"
-				WHAT="$SCRIPT ${F[_EMAIL_]} >/dev/null 2>&1"
-				JOB="$WHEN $WHAT"
-				cat <(fgrep -i -v "$SCRIPT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
-				WHEN="3 * * * *"
-				WHAT="$PAT >/dev/null 2>&1"
-				JOB="$WHEN $WHAT"
-				cat <(fgrep -i -v "$PAT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
-				echo "Done."
-			else
-				echo >&2 "Error installing pat.  Reporting disabled."
-			fi
-		else
-			echo >&2 "hamapps.sh is not found but is needed to install pat to email reports.  Reporting will not be enabled."
-		fi
-	else
-		echo >&2 "Invalid or missing Sysop email address.  Reporting will not be enabled."
-	fi
-else # Remove report cron job if present
-	echo "Remove Reporting"
-	cat <(fgrep -i -v "$SCRIPT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
-	cat <(fgrep -i -v "$PAT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
-fi
 
 cd /usr/local/src/hampi/rmsgw/
 

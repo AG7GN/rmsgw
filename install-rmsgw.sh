@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.2.5"
+VERSION="1.2.6"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -71,7 +71,7 @@ sudo ldconfig
 #echo "Done."
 
 echo "Install Direwolf"
-if ! command -v direwolf >/dev/null
+if ! command -v direwolf >/dev/null 2>&1
 then
    sudo dpkg --install direwolf_1.6C-1_armhf.deb
    [[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting installation."; exit 1; }
@@ -79,6 +79,21 @@ then
    echo "Done."
 else
    echo "Direwolf already installed"
+fi
+
+echo "Install/update utilities"
+$(command -v hamapps.sh) install hampi-utilities
+[[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting utilities installation."; exit 1; }
+echo "Done."
+
+echo "Install/update pat"
+if ! command -v pat >/dev/null 2>&1
+then # Install pat
+   $(command -v hamapps.sh) install pat
+   [[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting pat installation."; exit 1; }
+   echo "Done."
+else # pat already installed
+   echo "pat already installed"
 fi
 
 echo "Retrieve the latest rmsgw software"
