@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.2.6"
+VERSION="1.2.7"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -81,16 +81,30 @@ else
    echo "Direwolf already installed"
 fi
 
-echo "Install/update utilities"
-$(command -v hamapps.sh) install hampi-utilities
+echo "Install/update patmail.sh"
+wget -q -O patmail.sh https://raw.githubusercontent.com/AG7GN/hampi-utilities/master/patmail.sh
+[[ $? == 0 ]] || { echo >&2 "FAILED.  Could not download patmail.sh."; exit 1; }
+chmod +x patmail.sh
+sudo mv patmail.sh /usr/local/bin/
 echo "Done."
 
 echo "Install/update pat"
 if ! command -v pat >/dev/null 2>&1
 then # Install pat
-   $(command -v hamapps.sh) install pat
-   [[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting pat installation."; exit 1; }
-   echo "Done."
+   PAT_GIT_URL="$GITHUB_URL/la5nta/pat/releases"
+   cd $HOME
+   echo "============= pat installation requested from $PAT_GIT_URL ============="
+   PAT_REL_URL="$(wget -qO - $PAT_GIT_URL | grep -m1 _linux_armhf.deb | grep -Eoi '<a [^>]+>' | grep -Eo 'href="[^\"]+"' | cut -d'"' -f2)"
+   [[ $PAT_REL_URL == "" ]] && { echo >&2 "======= $PAT_GIT_URL download failed with $? ========"; exit 1; }
+   #PAT_URL="${GITHUB_URL}${PAT_REL_URL}"
+   PAT_URL="${PAT_REL_URL}"
+   PAT_FILE="${PAT_URL##*/}"
+   echo "============= Downloading $PAT_URL ============="
+   wget -q -O $PAT_FILE $PAT_URL || { echo >&2 "======= $PAT_URL download failed with $? ========"; exit 1; }
+   [ -s "$PAT_FILE" ] || { echo >&2 "======= $PAT_FILE is empty ========"; exit 1; }
+  	sudo dpkg -i $PAT_FILE || { echo >&2 "======= pat installation failed with $? ========"; exit 1; }
+   echo "============= pat installed ============="
+	rm -f $PAT_FILE
 else # pat already installed
    echo "pat already installed"
 fi
