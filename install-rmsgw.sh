@@ -83,7 +83,6 @@ fi
 
 echo "Install/update utilities"
 $(command -v hamapps.sh) install hampi-utilities
-[[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting utilities installation."; exit 1; }
 echo "Done."
 
 echo "Install/update pat"
