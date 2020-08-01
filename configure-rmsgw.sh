@@ -12,7 +12,7 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.1.11"
+VERSION="1.1.12"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
 PAT_DIR="$HOME/.wl2kgw"
@@ -194,6 +194,7 @@ TEMPF="$(mktemp)"
 WHO="$USER"
 SCRIPT="$(command -v rmsgw-activity.sh)"
 PAT="$(command -v pat) --config $PAT_DIR/config.json --mbox $PAT_DIR/mailbox --send-only --event-log /dev/null connect telnet"
+CLEAN="find $PAT_DIR/mailbox/${F[_CALL_]}/sent -type f -mtime +30 -exec rm -f {} \;"
 # remove old style pat cron job, which used the default config.json pat configuration
 OLDPAT="$(command -v pat) --send-only --event-log /dev/null connect telnet"
 cat <(fgrep -i -v "$OLDPAT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
@@ -226,6 +227,12 @@ then # Daily email reports requested
 			WHAT="$PAT >/dev/null 2>&1"
 			JOB="$WHEN PATH=\$PATH:/usr/local/bin; $WHAT"
 			cat <(fgrep -i -v "$PAT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
+			# Purge sent messages older than 30 days
+			echo "Installing cron to purge sent messages older than 30 days"
+			WHEN="7 0 * * *"
+			WHAT="$CLEAN"
+			JOB="$WHEN $WHAT"
+			cat <(fgrep -i -v "$WHAT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
 			echo "Done."
 		else
 			echo >&2 "pat not found but is needed to email reports. Reporting will not be enabled."
@@ -239,6 +246,7 @@ else # Reporting disabled. Remove report cron job if present
 	echo "Remove Reporting"
 	cat <(fgrep -i -v "$SCRIPT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
 	cat <(fgrep -i -v "$PAT" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
+	cat <(fgrep -i -v "$CLEAN" <(sudo crontab -u $WHO -l)) | sudo crontab -u $WHO -
 fi
 
 # Update the configuration file
