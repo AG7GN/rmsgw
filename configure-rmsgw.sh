@@ -220,11 +220,11 @@ then # Daily email reports requested
 			echo "Installing cron job for report generation and email for user $WHO"
 			WHEN="1 0 * * *"
 			WHAT="$SCRIPT ${F[_EMAIL_]} $PAT_DIR >/dev/null 2>&1"
-			JOB="$WHEN $WHAT"
+			JOB="$WHEN PATH=\$PATH:/usr/local/bin; $WHAT"
 			cat <(fgrep -i -v "$SCRIPT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
 			WHEN="3 * * * *"
 			WHAT="$PAT >/dev/null 2>&1"
-			JOB="$WHEN $WHAT"
+			JOB="$WHEN PATH=\$PATH:/usr/local/bin; $WHAT"
 			cat <(fgrep -i -v "$PAT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
 			echo "Done."
 		else
@@ -372,7 +372,7 @@ echo "Installing crontab for user rmsgw"
 WHO="rmsgw"
 WHEN="$INTERVAL * * * *"
 WHAT="/usr/local/bin/rmsgw_aci >/dev/null 2>&1"
-JOB="$WHEN $WHAT"
+JOB="$WHEN PATH=\$PATH:/usr/local/bin; $WHAT"
 cat <(fgrep -i -v "$WHAT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
 echo "Done."
 

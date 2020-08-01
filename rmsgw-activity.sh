@@ -6,7 +6,7 @@
 # 1 0 * * *   /home/pi/rmsgw-activity.sh 2>&1 >/dev/null
 
 
-VERSION="1.1.6"
+VERSION="1.1.7"
 
 declare -i AGE=24 # Age in hours
 FILES="/var/log/rms* /var/log/syslog*"
@@ -45,6 +45,6 @@ fi
 #   echo 
 #   cat $OUTFILE | sort | uniq
 #} | /usr/sbin/ssmtp $MAILTO
-cat $OUTFILE | sort | uniq | /usr/local/bin/patmail.sh -d $PAT_DIR $MAILTO "$HOSTNAME RMS Gateway activity for 24 hours preceding `date`" telnet
+cat $OUTFILE | sort | uniq | $(command -v patmail.sh) -d $PAT_DIR $MAILTO "$HOSTNAME RMS Gateway activity for 24 hours preceding `date`" telnet
 rm $OUTFILE
 rm $FILTERED
