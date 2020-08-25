@@ -12,7 +12,7 @@
 # /etc/rmsgw/sysop.xml
 # 
 
-VERSION="1.1.12"
+VERSION="1.1.13"
 
 CONFIG_FILE="$HOME/rmsgw.conf"
 PAT_DIR="$HOME/.wl2kgw"
@@ -202,13 +202,17 @@ if [[ ${F[_REPORTS_]} == "TRUE" ]]
 then # Daily email reports requested
 	if [[ ${F[_EMAIL_]} =~ ^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:].]{2,4}$ ]]
 	then # user has supplied a well-formed email address for SYSOP
+      echo "Setting up reporting."
 		if command -v pat >/dev/null 2>&1
 		then
 			# Check for pat's config file, config.json.  Create it if missing or corrupted.
-			RESULT="$(jq . $PAT_DIR/config.json 2>/dev/null)"
-			if [[ $RESULT == "" ]]
-			then # config.json missing or corrupted.  Make a new one.
+			if $(command -v jq) . $PAT_DIR/config.json >/dev/null 2>&1
+			then
+				echo "$PAT_DIR/config.json exists."
+			else # config.json missing or corrupted.  Make a new one.
+            echo "Making new $PAT_DIR/config.json file."
 				[[ -f $PAT_DIR/config.json ]] && rm -f $PAT_DIR/config.json
+            mkdir -p $PAT_DIR
 				cd $HOME
 				export EDITOR=ed
 				echo -n "" | pat --config $PAT_DIR/config.json configure >/dev/null 2>&1
@@ -234,6 +238,7 @@ then # Daily email reports requested
 			JOB="$WHEN $WHAT"
 			cat <(fgrep -i -v "$WHAT" <(sudo crontab -u $WHO -l)) <(echo "$JOB") | sudo crontab -u $WHO -
 			echo "Done."
+			echo "Reporting setup complete."
 		else
 			echo >&2 "pat not found but is needed to email reports. Reporting will not be enabled."
 			F[_REPORTS_]=FALSE
@@ -262,20 +267,24 @@ FNAME="etc/rmsgw/channels.xml"
 sed "s|_CALL_|${F[_CALL_]}|g;s|_SSID_|${F[_SSID_]}|;s|_PASSWORD_|${F[_PASSWORD_]}|;s|_GRID_|${F[_GRID_]}|;s|_FREQ_|${F[_FREQ_]}|;s|_MODEM_|${F[_MODEM_]}|;s|_POWER_|${F[_POWER_]}|;s|_HEIGHT_|${F[_HEIGHT_]}|;s|_GAIN_|${F[_GAIN_]}|;s|_DIR_|${F[_DIR_]}|;s|_HOURS_|${F[_HOURS_]}|;s|_SERVICE_|${F[_SERVICE_]}|" "$FNAME" > "$TEMPF" 
 [[ $? == 0 ]] || errorReport "ERROR updating $FNAME" 1
 sudo cp -f "$TEMPF" "/$FNAME"
+echo "/$FNAME configured."
 
 FNAME="etc/rmsgw/banner"
 echo "${F[_BANNER_]}" > "$TEMPF"
 sudo cp -f "$TEMPF" "/$FNAME"
+echo "/$FNAME configured."
 
 FNAME="etc/rmsgw/gateway.conf"
 sed "s|_CALL_|${F[_CALL_]}|g;s|_SSID_|${F[_SSID_]}|;s|_GRID_|${F[_GRID_]}|" "$FNAME" > "$TEMPF"
 [[ $? == 0 ]] || errorReport "ERROR updating $FNAME" 1
 sudo cp -f "$TEMPF" "/$FNAME"
+echo "/$FNAME configured."
 
 FNAME="etc/rmsgw/sysop.xml"
 sed "s|_CALL_|${F[_CALL_]}|g;s|_PASSWORD_|${F[_PASSWORD_]}|;s|_GRID_|${F[_GRID_]}|;s|_SYSOP_|${F[_SYSOP_]}|;s|_ADDR1_|${F[_ADDR1_]}|;s|_ADDR2_|${F[_ADDR2_]}|;s|_CITY_|${F[_CITY_]}|;s|_STATE_|${F[_STATE_]}|;s|_ZIP_|${F[_ZIP_]}|;s|_EMAIL_|${F[_EMAIL_]}|" "$FNAME" > "$TEMPF"
 [[ $? == 0 ]] || errorReport "ERROR updating $FNAME" 1
 sudo cp -f "$TEMPF" "/$FNAME"
+echo "/$FNAME configured."
 
 FNAME="etc/ax25/axports"
 sed -i '/^[[:space:]]*$/d' $FNAME
@@ -289,30 +298,35 @@ then
 fi
 sudo cp -f "$TEMPF" "/$FNAME"
 sudo chmod ugo+r "/$FNAME"
+echo "/$FNAME configured."
 
 FNAME="etc/ax25/ax25d.conf"
 sed "s|_CALL_|${F[_CALL_]}|g;s|_SSID_|${F[_SSID_]}|g" "$FNAME" > "$TEMPF"
 [[ $? == 0 ]] || errorReport "ERROR updating $FNAME" 1
 sudo cp -f "$TEMPF" "/$FNAME"
 sudo chmod ugo+r "/$FNAME"
+echo "/$FNAME configured."
 
 FNAME="etc/ax25/ax25-up.new"
 sed "s|_DWUSER_|${F[_DWUSER_]}|;s|_TNC_|${F[_TNC_]}|;s|_MODEM_|${F[_MODEM_]}|" "$FNAME" > "$TEMPF"
 [[ $? == 0 ]] || errorReport "ERROR updating $FNAME" 1
 sudo cp -f "$TEMPF" "/$FNAME"
 sudo chmod +x "/$FNAME"
+echo "/$FNAME configured."
 
 FNAME="etc/ax25/ax25-up.new2"
 sed "s|_BEACON_|${F[_BEACON_]}|" "$FNAME" > "$TEMPF"
 [[ $? == 0 ]] || errorReport "ERROR updating $FNAME" 1
 sudo cp -f "$TEMPF" "/$FNAME"
 sudo chmod +x "/$FNAME"
+echo "/$FNAME configured."
 
 FNAME="etc/ax25/direwolf.conf"
 sed "s|_CALL_|${F[_CALL_]}|g;s|_PTT_|${F[_PTT_]}|;s|_MODEM_|${F[_MODEM_]}|;s|_ARATE_|${F[_ARATE_]}|;s|_ADEVICE_CAPTURE_|${F[_ADEVICE_CAPTURE_]}|;s|_ADEVICE_PLAY_|${F[_ADEVICE_PLAY_]}|" "$FNAME" > "$TEMPF"
 [[ $? == 0 ]] || errorReport "ERROR updating $FNAME" 1
 sudo cp -f "$TEMPF" "/$FNAME"
 sudo chmod ugo+r "/$FNAME"
+echo "/$FNAME configured."
 
 echo "Setting up symlink for /etc/ax25/ax25-up if needed"
 if ! [ -L /etc/ax25/ax25-up ]
