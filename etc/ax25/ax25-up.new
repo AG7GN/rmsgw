@@ -309,7 +309,7 @@ if [ $TNCTYPE = "direwolf" ]; then
    #alsactl restore
    echo "Starting direwolf"
    echo "Starting direwolf" >> $LOG
-   sudo su - $DWUSER -c "$DIREWOLF -t 0 -c $DIREWOLFCONF -p >> $LOG 2>&1 &"
+   sudo su - $DWUSER -c "$DIREWOLF -t 0 -c $DIREWOLFCONF -p -T "%Y%m%dT%H:%M:%S" >> $LOG 2>&1 &"
    #Running CHKERR here won't work as direwolf starts in the background
    COUNTER=0
    MAXWAIT=15
