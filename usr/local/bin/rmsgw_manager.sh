@@ -16,7 +16,7 @@
 #%
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 1.0.0
+#-    version         ${SCRIPT_NAME} 1.0.1
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -120,7 +120,7 @@ function CheckDaemon() {
 	      STATUS+="</span><span color='red'> but Not Running</span></big></b>"
 	   fi
 	else # ax25.service not installed/enabled
-		STATUS="<b><big><span color='red'>Not Enabled</span></big></b>"
+		STATUS="<b><big><span color='red'>Not Enabled</span></big>\nClick 'Configure' to set up the RMS Gateway</b>"
 	fi
   	yad --center --title="$TITLE" --text="$STATUS\nThis window will close in $T seconds" \
   		--width=400 --height=100 \
