@@ -1,6 +1,6 @@
 # Building an RMS Gateway on Raspberry Pi running Debian 10 (Buster)
 
-VERSION 20200121
+VERSION 20200830
 
 IMPORTANT: You must obtain a [Sysop Winlink account](https://www.winlink.org/content/join_gateway_sysop_team_sysop_guidelines) in order to operate an RMS Gateway.
 
@@ -10,9 +10,9 @@ IMPORTANT: To install the RMS Gateway, run the __install-rmsgw.sh__ script that 
 
 Run these commands in a terminal:
 
-	sudo mkdir -p /usr/local/src/hampi
-	sudo chown pi:pi /usr/local/src/hampi
-	cd /usr/local/src/hampi
+	sudo mkdir -p /usr/local/src/nexus
+	sudo chown pi:pi /usr/local/src/nexus
+	cd /usr/local/src/nexus
 	git clone http://github.com/AG7GN/rmsgw
 	cd rmsgw
 	./install-rmsgw.sh

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.2.9"
+VERSION="1.3.0"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -139,48 +139,37 @@ else
    echo >&2 "WARNING: Could not download pitnc software."
 fi
 
-echo "Get hampi-iptables from github.com/AG7GN/iptables"
-rm -rf hampi-iptables/
-git clone https://github.com/AG7GN/hampi-iptables
+echo "Get nexus-iptables from github.com/AG7GN/iptables"
+rm -rf nexus-iptables/
+git clone https://github.com/AG7GN/nexus-iptables
 [[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting installation."; exit 1; }
 echo "Done."
 
-echo "Make 'Configure RMS Gateway' menu item for the 'Ham Radio' menu"
-cat > /tmp/configure-rmsgw.desktop << EOF
-[Desktop Entry]
-Name=Configure RMS Gateway
-GenericName=Configure RMS Gateway
-Comment=Configure RMS Gateway and supporting apps
-Exec=lxterminal --geometry=90x30 -t "Configure RMS Gateway" -e "/usr/local/src/hampi/rmsgw/configure-rmsgw.sh"
-Icon=/usr/share/raspberrypi-artwork/raspitr.png
-Terminal=false
-Type=Application
-Categories=HamRadio;
-Comment[en_US]=Configure RMS Gateway
-#NoDisplay=true
-EOF
-sudo mv -f /tmp/configure-rmsgw.desktop /usr/local/share/applications/
+sudo rm -f /usr/local/share/applications/configure-rmsgw.desktop
+sudo rm -f /usr/local/share/applications/rmsgw_monitor.desktop
 
-echo "Make 'RMS Gateway Monitor' menu item for the 'Ham Radio' menu"
-cat > /tmp/rmsgw_monitor.desktop << EOF
+echo "Make 'RMS Gateway Manager' menu item for the 'Ham Radio' menu"
+cat > /tmp/rmsgw_config_monitor.desktop << EOF
 [Desktop Entry]
-Name=RMS Gateway Monitor
-GenericName=RMS Gateway Monitor
-Comment=RMS Gateway Monitor
-Exec=bash -c /usr/local/bin/rmsgw_monitor.sh
+Name=RMS Gateway Manager
+GenericName=RMS Gateway Manager
+Comment=RMS Gateway Manager
+Exec=bash -c /usr/local/bin/rmsgw_manager.sh
 Icon=/usr/share/raspberrypi-artwork/raspitr.png
 Terminal=false
 Type=Application
 Categories=HamRadio;
-Comment[en_US]=RMS Gateway Monitor
+Comment[en_US]=RMS Gateway Manager
 EOF
-sudo mv -f /tmp/rmsgw_monitor.desktop /usr/local/share/applications/
+sudo mv -f /tmp/rmsgw_config_monitor.desktop /usr/local/share/applications/
 
 echo "Done."
 
 echo "Installing scripts, firewall rules and logrotate files."
 sudo cp -f usr/local/bin/rmschanstat.local /usr/local/bin/
-sudo cp -f usr/local/bin/rmsgw_monitor.sh /usr/local/bin/
+# Remove old, now unused rmsgw_monitor.sh
+sudo rm -f /usr/local/bin/rmsgw_monitor.sh
+sudo cp -f usr/local/bin/rmsgw_manager.sh /usr/local/bin/
 chmod +x etc/ax25/ax25-down
 sudo cp -f etc/ax25/ax25-down /etc/ax25/
 sudo cp -f etc/logrotate.d/* /etc/logrotate.d/
@@ -188,7 +177,7 @@ sudo cp -f etc/rsyslog.d/* /etc/rsyslog.d/
 sudo systemctl restart rsyslog
 sudo cp -f /etc/iptables/rules.v4 /etc/iptables/rules.v4.previous
 sudo cp -f /etc/iptables/rules.v6 /etc/iptables/rules.v6.previous
-sudo cp -f hampi-iptables/rules* /etc/iptables/
+sudo cp -f nexus-iptables/rules* /etc/iptables/
 sudo chown root:root /etc/iptables/rules*
 sudo cp -f rmsgw-activity.sh /usr/local/bin/
 echo "Done."
