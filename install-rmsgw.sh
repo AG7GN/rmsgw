@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.3.0"
+VERSION="1.3.1"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -82,7 +82,7 @@ else
 fi
 
 echo "Install/update patmail.sh"
-wget -q -O patmail.sh https://raw.githubusercontent.com/AG7GN/hampi-utilities/master/patmail.sh
+wget -q -O patmail.sh https://raw.githubusercontent.com/AG7GN/nexus-utilities/master/patmail.sh
 [[ $? == 0 ]] || { echo >&2 "FAILED.  Could not download patmail.sh."; exit 1; }
 chmod +x patmail.sh
 sudo mv patmail.sh /usr/local/bin/

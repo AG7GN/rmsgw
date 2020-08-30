@@ -16,7 +16,7 @@
 #%
 #================================================================
 #- IMPLEMENTATION
-#-    version         ${SCRIPT_NAME} 1.0.1
+#-    version         ${SCRIPT_NAME} 1.0.2
 #-    author          Steve Magnuson, AG7GN
 #-    license         CC-BY-SA Creative Commons License
 #-    script_id       0
@@ -342,7 +342,7 @@ function SaveSettings () {
 
 	# Update the various RMS gateway configuration files
 	TEMPF=$RMSGW_TEMP_CONFIG
-	cd /usr/local/src/hampi/rmsgw/
+	cd /usr/local/src/nexus/rmsgw/
 
 	FNAME="etc/rmsgw/channels.xml"
 	sed "s|_CALL_|${F[_CALL_]}|g;s|_SSID_|${F[_SSID_]}|;s|_PASSWORD_|${F[_PASSWORD_]}|;s|_GRID_|${F[_GRID_]}|;s|_FREQ_|${F[_FREQ_]}|;s|_MODEM_|${F[_MODEM_]}|;s|_POWER_|${F[_POWER_]}|;s|_HEIGHT_|${F[_HEIGHT_]}|;s|_GAIN_|${F[_GAIN_]}|;s|_DIR_|${F[_DIR_]}|;s|_HOURS_|${F[_HOURS_]}|;s|_SERVICE_|${F[_SERVICE_]}|" "$FNAME" > "$TEMPF" 
