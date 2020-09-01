@@ -190,7 +190,7 @@ function SetFormFields () {
 	TNCs="tncpi~direwolf"
 	[[ $TNCs =~ ${F[_TNC_]} ]] && TNCs="$(echo "$TNCs" | sed "s/${F[_TNC_]}/\^${F[_TNC_]}/")" 
 
-	MODEMs="1200~9600"
+	MODEMs="300~1200~9600"
 	[[ $MODEMs =~ ${F[_MODEM_]} ]] && MODEMs="$(echo "$MODEMs" | sed "s/${F[_MODEM_]}/\^${F[_MODEM_]}/")" 
 
 	SERVICEs="PUBLIC~EMCOMM"
