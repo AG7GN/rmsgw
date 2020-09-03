@@ -12,7 +12,9 @@
 
 # modified by dranch@trinnet.net
 #
-# 07/07/19 - Updated by Steve Magnuson, AG7GN
+# 07/07/19 - Updated by Steve Magnuson, AG7GN to run direwolf as non-root, assign mask to
+#            ax0 and ax1, add timestamp to Direwolf traffic, adjust parameters if 9600
+#            is selected
 # 11/10/18 - Added restoring advanced ax25 settings
 # 11/04/18 - Added IPoverAX25 support
 # 10/21/18 - Updated listen parameters for new listen -t syntax
@@ -54,6 +56,7 @@ KISSPARMS=/usr/sbin/kissparms
 LISTEN=/usr/bin/listen
 IPTABLES=/sbin/iptables
 IP6TABLES=/sbin/iptables
+IFCONFIG=/sbin/ifconfig
 TNC_GET=/usr/local/bin/pitnc_getparams
 TNC_SET=/usr/local/bin/pitnc_setparams
 
@@ -266,6 +269,8 @@ if [ -n "`grep ^axudp /etc/ax25/axports`" ]; then
    echo "Installing a KISS link on ethernet port" >> $LOG
    $KISSATTACH $AXUDP axudp ${IPADDR%/*}  > /tmp/ax25-config.tmp
    CHKERR
+   $IFCONFIG ax0 netmask 255.255.255.255 2>/dev/null
+   $IFCONFIG ax1 netmask 255.255.255.255 2>/dev/null
    awk '/device/ { print $7 }' /tmp/ax25-config.tmp > /tmp/ax25-config0-tmp
    read Device < /tmp/ax25-config0-tmp
    # Check for Device
@@ -297,6 +302,8 @@ if [ $TNCTYPE = "tncpi" ]; then
    export PTS0=`more /tmp/unix98 | grep -w /dev | cut -b -11`
    $KISSATTACH $PTS0 $AXINT ${IPADDR%/*} > /tmp/ax25-config.tmp
    CHKERR
+   $IFCONFIG ax0 netmask 255.255.255.255 2>/dev/null
+   $IFCONFIG ax1 netmask 255.255.255.255 2>/dev/null
    awk '/device/ { print $7 }' /tmp/ax25-config.tmp > /tmp/ax25-config1-tmp
    read Device < /tmp/ax25-config1-tmp
 fi
@@ -344,6 +351,8 @@ if [ $TNCTYPE = "direwolf" ]; then
    echo "PTS0 device: $PTS0" >> $LOG
    $KISSATTACH $PTS0 $AXINT ${IPADDR%/*} > /tmp/ax25-config.tmp
    CHKERR
+   $IFCONFIG ax0 netmask 255.255.255.255 2>/dev/null
+   $IFCONFIG ax1 netmask 255.255.255.255 2>/dev/null
    awk '/device/ { print $7 }' /tmp/ax25-config.tmp > /tmp/ax25-config1-tmp
    read Device < /tmp/ax25-config1-tmp
 fi
@@ -393,6 +402,8 @@ if [ $TNCTYPE != "d74" ]; then
       cd /proc/sys/net/ax25/$Device/
       #Device parameters
       $IP address add $IPADDR dev ax0
+   	$IFCONFIG ax0 netmask 255.255.255.255 2>/dev/null
+   	$IFCONFIG ax1 netmask 255.255.255.255 2>/dev/null
 		$IPTABLES -A OUTPUT -o ax0 -j DROP
 		$IP6TABLES -A OUTPUT -o ax0 -j DROP
      else echo "** Error setting $Device parms **"
