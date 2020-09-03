@@ -35,6 +35,9 @@ if [ -z "`ifconfig | grep -v grep | grep ax0`" ]; then
    exit 1
 fi
 
+# Don't make then entire 44 net local!
+/sbin/ifconfig ax0 netmask 255.255.255.255 2>/dev/null
+
 # Start NetRom
 if [ -f /etc/ax25/rc.netrom ]; then
    /etc/ax25/rc.netrom
