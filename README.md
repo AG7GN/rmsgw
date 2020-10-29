@@ -219,12 +219,17 @@ Change __GWCALL__ and __GRIDSQUARE__ as needed.
 ## 5. Install Direwolf
 
 ### 5.1 Prerequisites
-	sudo apt-get install libasound2-dev unzip extra-xdg-menus gpsd libgps-dev
+	sudo apt install git gcc g++ make cmake libasound2-dev libudev-dev
 	
 ### 5.2 Install
 	cd ~
-	sudo dpkg --install direwolf_1.6C-1_armhf.deb
-	sudo cp /usr/share/doc/direwolf/examples/direwolf.conf /etc/ax25/
+	git clone https://www.github.com/wb2osz/direwolf
+	cd direwolf
+	mkdir build && cd build
+	cmake ..
+	make -j4
+	sudo make install
+	make install-conf	
 	
 NOTE:  There's lots of good information about Direwolf, it's configuration and operation in the `/usr/share/doc/direwolf/examples` folder.
 

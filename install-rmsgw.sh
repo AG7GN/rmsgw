@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.3.1"
+VERSION="1.3.2"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -19,7 +19,7 @@ function aptError () {
 }
 
 sudo apt-get update || aptError "sudo apt-get update"
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential autoconf libtool git psmisc net-tools zlib1g zlib1g-dev libncurses5-dev libncursesw5-dev xutils-dev libxml2 libxml2-dev python-requests mariadb-client libmariadbclient-dev texinfo libasound2-dev unzip extra-xdg-menus gpsd libgps-dev yad iptables-persistent libhamlib2 libhamlib-dev || aptError "sudo apt-get -y install <various packages>"
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential autoconf libtool git gcc g++ make cmake psmisc net-tools zlib1g zlib1g-dev libncurses5-dev libncursesw5-dev xutils-dev libxml2 libxml2-dev python-requests mariadb-client libmariadbclient-dev texinfo libasound2-dev libudev-dev unzip extra-xdg-menus gpsd libgps-dev yad iptables-persistent libhamlib2 libhamlib-dev || aptError "sudo apt-get -y install <various packages>"
 
 ## Remove multicast advertising protocol
 #echo "Remove avahi-daemon and libnss-mdns"
@@ -71,15 +71,35 @@ sudo ldconfig
 #echo "Done."
 
 echo "Install Direwolf"
-if ! command -v direwolf >/dev/null 2>&1
+cd $HOME
+git clone https://www.github.com/wb2osz/direwolf
+cd direwolf
+LATEST_VER="$(grep -m1 -i version src/version.h | sed 's/[^0-9.]//g')"
+INSTALLED_VER="$(direwolf --version 2>/dev/null | grep -m1 -i "version" | sed 's/(.*)//g;s/[^0-9.]//g')"
+[[ $INSTALLED_VER == "" || -f /usr/bin/direwolf ]] && INSTALLED_VER=0  # Development versions were installed in /usr/bin
+[ -f /usr/bin/direwolf ] && sudo rm -f /usr/bin/direwolf # Remove older dev version
+if [[ $INSTALLED_VER == $LATEST_VER ]]
 then
-   sudo dpkg --install direwolf_1.6C-1_armhf.deb
-   [[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting installation."; exit 1; }
-   sudo cp /usr/share/direwolf/examples/* /etc/ax25/
-   echo "Done."
+	mkdir build && cd build
+	cmake ..
+	make -j4
+	sudo make install
+	echo "Done."
 else
-   echo "Direwolf already installed"
+	echo "Direwolf already installed"
 fi
+cd $HOME
+rm -rf direwolf
+#make install-conf
+#if ! command -v direwolf >/dev/null 2>&1
+#then
+#   sudo dpkg --install direwolf_1.6C-1_armhf.deb
+#   [[ $? == 0 ]] || { echo >&2 "FAILED.  Aborting installation."; exit 1; }
+#   sudo cp /usr/share/direwolf/examples/* /etc/ax25/
+#   echo "Done."
+#else
+#   echo "Direwolf already installed"
+#fi
 
 echo "Install/update patmail.sh"
 wget -q -O patmail.sh https://raw.githubusercontent.com/AG7GN/nexus-utilities/master/patmail.sh

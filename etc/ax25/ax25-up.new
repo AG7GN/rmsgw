@@ -47,7 +47,7 @@ export TZ
 #Binaries
 #--------
 DWUSER=_DWUSER_ # Run direwolf as this user instead of root.
-DIREWOLF="/usr/bin/direwolf"
+DIREWOLF=$(command -v direwolf)
 MKISS=/usr/sbin/mkiss
 KISSATTACH=/usr/sbin/kissattach
 IP=/bin/ip
