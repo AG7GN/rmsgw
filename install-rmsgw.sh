@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.3.2"
+VERSION="1.3.3"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -80,13 +80,13 @@ INSTALLED_VER="$(direwolf --version 2>/dev/null | grep -m1 -i "version" | sed 's
 [ -f /usr/bin/direwolf ] && sudo rm -f /usr/bin/direwolf # Remove older dev version
 if [[ $INSTALLED_VER == $LATEST_VER ]]
 then
+	echo "Direwolf already installed"
+else
 	mkdir build && cd build
 	cmake ..
 	make -j4
 	sudo make install
 	echo "Done."
-else
-	echo "Direwolf already installed"
 fi
 cd $HOME
 rm -rf direwolf
