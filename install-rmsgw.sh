@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.3.3"
+VERSION="1.3.4"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -190,8 +190,7 @@ sudo cp -f usr/local/bin/rmschanstat.local /usr/local/bin/
 # Remove old, now unused rmsgw_monitor.sh
 sudo rm -f /usr/local/bin/rmsgw_monitor.sh
 sudo cp -f usr/local/bin/rmsgw_manager.sh /usr/local/bin/
-chmod +x etc/ax25/ax25-down
-sudo cp -f etc/ax25/ax25-down /etc/ax25/
+sudo cp -f etc/ax25/ax25-* /etc/ax25/
 sudo cp -f etc/logrotate.d/* /etc/logrotate.d/
 sudo cp -f etc/rsyslog.d/* /etc/rsyslog.d/
 sudo systemctl restart rsyslog
