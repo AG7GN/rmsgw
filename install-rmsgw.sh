@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.3.4"
+VERSION="1.3.5"
 
 # This script installs the prerequisites as well as the libax25, ax25-tools,
 # apps and the rmsgw software.  It also installs Hamlib and Direwolf.
@@ -71,7 +71,6 @@ sudo ldconfig
 #echo "Done."
 
 echo "Install Direwolf"
-cd $HOME
 git clone https://www.github.com/wb2osz/direwolf
 cd direwolf
 LATEST_VER="$(grep -m1 -i version src/version.h | sed 's/[^0-9.]//g')"
@@ -88,7 +87,7 @@ else
 	sudo make install
 	echo "Done."
 fi
-cd $HOME
+cd ..
 rm -rf direwolf
 #make install-conf
 #if ! command -v direwolf >/dev/null 2>&1
